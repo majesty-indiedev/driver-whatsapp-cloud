@@ -107,7 +107,7 @@ class WhatsappDriver extends HttpDriver
             } elseif ($this->event->get('type') == 'location') {
                 $this->messages = [
                     new IncomingMessage(
-                        isset($this->event->get('location')['name']) ? $this->event->get('location')['name'] : '',
+                        isset($this->event->get('location')['name']) ? $this->event->get('location')['name'] : $this->event->get('location'),
                         $this->event->get('from'),
                         $this->event->get('from'),
                         $this->payload
