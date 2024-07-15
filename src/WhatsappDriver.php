@@ -53,7 +53,15 @@ class WhatsappDriver extends HttpDriver
      */
     public function buildPayload(Request $request)
     {
-        $this->payload = new ParameterBag((array) json_decode($request->getContent(), true)['entry'][0]['changes'][0]['value']);
+        $content = json_decode($request->getContent(), true);
+        if (isset($content['entry'][0]['changes'][0]['value'])) {
+            $this->payload = new ParameterBag((array) $content['entry'][0]['changes'][0]['value']);
+        } else {
+            // Handle the error or provide a default value
+            $this->payload = new ParameterBag([]);
+            // Log an error message or throw an exception if necessary
+        }
+        // $this->payload = new ParameterBag((array) json_decode($request->getContent(), true)['entry'][0]['changes'][0]['value']);
         $this->event = Collection::make((array) $this->payload->get('messages') ? (array) $this->payload->get('messages')[0] : $this->payload);
         $this->content = $request->getContent();
         $this->config = Collection::make($this->config->get('whatsapp', []));
@@ -290,7 +298,7 @@ class WhatsappDriver extends HttpDriver
 
     protected function buildApiUrl($endpoint)
     {
-        return $this->config->get('url') . '/' . $endpoint;
+        return $this->config->get('url') . '/' . $this->config->get('version') . '/' . $this->config->get('phone_number_id') . '/' . $endpoint;
     }
 
     public function buildAuthHeader()
@@ -344,5 +352,6 @@ class WhatsappDriver extends HttpDriver
             "Headers: ". print_r($headers, true)."\n";
 
         throw new WhatsappConnectionException($message);
+        
     }
 }

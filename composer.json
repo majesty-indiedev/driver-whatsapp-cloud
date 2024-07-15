@@ -1,54 +1,50 @@
 {
-  "name": "irwan-runtuwene/driver-whatsapp-cloud",
-  "license": "MIT",
-  "description": "WABA Cloud API driver for BotMan",
-  "keywords": [
-      "Bot",
-      "BotMan",
-      "WhatsApp",
-      "WABA"
-  ],
-  "homepage": "http://github.com/irwan-runtuwene/driver-whatsapp-cloud",
-  "authors": [
-      {
-          "name": "S. Irwan Runtuwene",
-          "email": "stefanus.irwan@gmail.com"
-      },
-      {
-          "name": "Mohammad Rivai Sali",
-          "email": "m.rivai.sali@gmail.com"
-      }
-  ],
-  "require": {
-      "php": ">=7.0",
-      "botman/botman": "^2.0",
-      "ext-curl": "*"
-  },
-  "require-dev": {
-      "brocosan/studio-addons": "^1.7.0",
-      "illuminate/contracts": "^5.5 || ^6.0 || ^7.0 || ^8.0 || ^9.0",
-      "phpunit/phpunit": "^5.0 || ^7.0 || ^8.0 || ^9.0",
-      "mockery/mockery": "^1.4.4"
-  },
-  "autoload": {
-      "psr-4": {
-          "BotMan\\Drivers\\Whatsapp\\": "src/"
-      }
-  },
-  "autoload-dev": {
-      "psr-4": {
-          "Tests\\": "tests/"
-      }
-  },
-  "scripts": {
-      "test": "vendor/bin/phpunit",
-      "cs": "php-cs-fixer fix"
-  },
-  "extra": {
-      "laravel": {
-          "providers": [
-              "BotMan\\Drivers\\Whatsapp\\Providers\\WhatsappServiceProvider"
-          ]
-      }
+    "name": "mohapinkepane/driver-whatsapp-cloud",
+    "license": "MIT",
+    "description": "WABA Cloud API driver for BotMan",
+    "keywords": [
+        "Bot",
+        "BotMan",
+        "WhatsApp",
+        "WABA"
+    ],
+    "homepage": "https://github.com/mohapinkepane/driver-whatsapp-cloud",
+    "authors": [
+        {
+            "name": "Mohapi Nkepane",
+            "email": "mohapi765@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "botman/botman": "^2.0",
+        "ext-curl": "*"
+    },
+    "require-dev": {
+        "botman/studio-addons": "^1.0",
+        "illuminate/contracts": "^5.5",
+        "phpunit/phpunit": "^5.0",
+        "mockery/mockery": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "BotMan\\Drivers\\Whatsapp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "cs": "php-cs-fixer fix"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BotMan\\Drivers\\Whatsapp\\Providers\\WhatsappServiceProvider"
+            ]
+        }
+    }
   }
-}
