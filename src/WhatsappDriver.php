@@ -61,6 +61,7 @@ class WhatsappDriver extends HttpDriver
             $this->payload = new ParameterBag([]);
             // Log an error message or throw an exception if necessary
         }
+        // $this->payload = new ParameterBag((array) json_decode($request->getContent(), true));
         // $this->payload = new ParameterBag((array) json_decode($request->getContent(), true)['entry'][0]['changes'][0]['value']);
         $this->event = Collection::make((array) $this->payload->get('messages') ? (array) $this->payload->get('messages')[0] : $this->payload);
         $this->content = $request->getContent();
