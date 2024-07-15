@@ -7,12 +7,12 @@ BotMan driver to connect WhatsApp Business Cloud API with [BotMan](https://githu
 
 Please read the official documentation at [Meta for Developer](https://developers.facebook.com/docs/whatsapp/cloud-api)
 
-##Installation
+## Installation
 You can install the package via composer:
 
     composer require mohapinkepane/driver-whatsapp-cloud
 
-##Configuring the package
+## Configuring the package
 You can publish the config file with:
 
     php artisan vendor:publish --provider="Botman\Drivers\Whatsapp\Providers\WhatsappServiceProvider"
@@ -49,7 +49,7 @@ Please see [CONTRIBUTING](https://github.com/mohapinkepane/driver-whatsapp-cloud
 - [ ] Location Attachment
 - [ ] Video Attachment
 
-#Credits
+## Credits
 
 - [irwan-runtuwene](https://github.com/irwan-runtuwene/driver-whatsapp)
 - [rivaisali](https://github.com/rivaisali/driver-whatsapp)
