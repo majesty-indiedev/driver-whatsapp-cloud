@@ -94,19 +94,26 @@ Please see [CONTRIBUTING](https://github.com/mohapinkepane/driver-whatsapp-cloud
 ## Feature List
 
 - [x] Text Message
+- [x] Contact Message
+- [x] Location Message
+- [x] Location Request Message
+- [x] Reaction Message
+- [x] Image Attachment
+- [x] Document Attachment
+- [x] Location Attachment
+- [x] Video Attachment
+- [x] Audio Attachment
+- [x] Sticker Attachment
+- [x] Call To Action
+- [x] Interactive Message
+    - [x] List
+    - [x] Button
 
 ### TODO:
 - [ ] Template Message
 - [ ] Interactive Message
-    - [ ] List
-    - [ ] Button
     - [ ] Product
     - [ ] Product List
-- [ ] Image Attachment
-- [ ] Document Attachment
-- [ ] Location Attachment
-- [ ] Video Attachment
-
 ## Credits
 
 - [irwan-runtuwene](https://github.com/irwan-runtuwene/driver-whatsapp)
