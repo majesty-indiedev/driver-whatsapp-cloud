@@ -2,7 +2,9 @@
 
 namespace BotMan\Drivers\Whatsapp\Extensions;
 
-class ElementButton
+use JsonSerializable;
+
+class ElementButton implements JsonSerializable
 {
     /** @var string */
     protected $title;
@@ -123,7 +125,7 @@ class ElementButton
                 'title' => $this->title,
             ],
         ];
-
+        
         return $buttonArray;
     }
 

@@ -2,7 +2,9 @@
 
 namespace BotMan\Drivers\Whatsapp\Extensions;
 
-class ElementComponent
+use JsonSerializable;
+
+class ElementComponent implements JsonSerializable
 {
 
      /** @var string */

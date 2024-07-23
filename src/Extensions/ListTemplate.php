@@ -24,7 +24,10 @@ class ListTemplate implements JsonSerializable, WebAccess
     /** @var array */
     public $sections = [];
 
-    
+    /** @var string */
+    public $context_message_id;
+
+
 
     /**
      * @param $text
@@ -70,21 +73,67 @@ class ListTemplate implements JsonSerializable, WebAccess
     }
 
 
+        /**
+     * Get the context_message_id.
+     *
+     * @return string
+     */
+    public function getContextMessageID()
+    {
+        if (empty($this->context_message_id)) {
+            throw new \UnexpectedValueException('This message does not contain a context_message_id');
+        }
+        return $this->context_message_id;
+    }
+
+
+    /**
+     * Set the context_message_id.
+     * @param  string  $context_message_id
+     * @return $this
+     */
+    public function setContextMessageID($context_message_id)
+    {
+        $this->context_message_id = $context_message_id;
+
+        return $this;
+    }
+
     /**
      * @return array
      */
     public function toArray()
     {
-        return [
+        $array=[
             'type' => 'interactive',
             'interactive' => [
-                'action' => [
-                    'sections' => $this->sections,
-                ]
-            ],
-        ];
-    }
+                    'type' => 'list',
+                    'header' => [
+                        'type' => 'text',
+                        'text' => $this->header,
+                    ],
+                    'body' => [
+                        'text' => $this->text
+                    ],
+                    'footer' => [
+                        'text' => $this->footer,
+                    ],
 
+                    'action' => [
+                        'button' => $this->action,
+                        'sections' => $this->sections,
+                    ]
+            ],
+
+        ];
+
+        if(isset($this->context_message_id)){
+            $array['context']['message_id'] = $this->context_message_id;
+        }
+
+        return $array;
+
+    }
 
     /**
      * @return array
@@ -106,6 +155,9 @@ class ListTemplate implements JsonSerializable, WebAccess
             'type' => 'list',
             'text' => $this->text,
             'sections' => $this->sections,
+            'header'=>$this->header,
+            'footer'=>$this->footer,
+            'button' => $this->action,
         ];
     }
 }

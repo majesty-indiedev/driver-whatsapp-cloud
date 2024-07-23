@@ -6,7 +6,7 @@ use JsonSerializable;
 use BotMan\BotMan\Interfaces\WebAccess;
 use BotMan\Drivers\Whatsapp\Extensions\ElementButtonHeader;
 
-class ButtonTemplate implements JsonSerializable, WebAccess
+class CallToActionTemplate implements JsonSerializable, WebAccess
 {
     /** @var string */
     protected $id;
@@ -14,11 +14,15 @@ class ButtonTemplate implements JsonSerializable, WebAccess
     /** @var string */
     public $text;
 
-    /** @var array */
-    public $buttons = [];
-
      /** @var string */
      public $footer;
+
+       /** @var string */
+    public $action;
+
+    /** @var string */
+    public $url;
+
 
     /** @var array */
      public $header=[];
@@ -27,14 +31,16 @@ class ButtonTemplate implements JsonSerializable, WebAccess
      * @param $text
      * @return static
      */
-    public static function create($text)
+    public static function create($text,$action,$url)
     {
-        return new static($text);
+        return new static($text,$action,$url);
     }
 
-    public function __construct($text)
+    public function __construct($text,$action,$url)
     {
         $this->text = $text;
+        $this->action = $action;
+        $this->url = $url;
     }
 
      /**
@@ -71,32 +77,6 @@ class ButtonTemplate implements JsonSerializable, WebAccess
     }
 
     /**
-     * @param  ElementButton  $button
-     * @return $this
-     */
-    public function addButton(ElementButton $button)
-    {
-        $this->buttons[] = $button->toArray();
-
-        return $this;
-    }
-
-    /**
-     * @param  array  $buttons
-     * @return $this
-     */
-    public function addButtons(array $buttons)
-    {
-        foreach ($buttons as $button) {
-            if ($button instanceof ElementButton) {
-                $this->buttons[] = $button->toArray();
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return array
      */
     public function toArray()
@@ -104,7 +84,7 @@ class ButtonTemplate implements JsonSerializable, WebAccess
         return [
             'type' => 'interactive',
             'interactive' => [
-                'type'=>"button",
+                "type"=>"cta_url",
                 'header' => $this->header,
                 'body' => [
                     "text"=>$this->text
@@ -113,7 +93,11 @@ class ButtonTemplate implements JsonSerializable, WebAccess
                     "text"=>$this->footer
                 ],
                 'action' => [
-                    'buttons' => $this->buttons,
+                        "name"=>"cta_url",
+                        "parameters"=>[
+                            "display_text"=>$this->action,
+                            "url"=>$this->url
+                        ]
                 ]
             ],
         ];
@@ -136,11 +120,14 @@ class ButtonTemplate implements JsonSerializable, WebAccess
     public function toWebDriver()
     {
         return [
-            'type' => 'buttons',
+            'type' => 'cta_url',
             'text' => $this->text,
             'buttons' => $this->buttons,
             'header'=>$this->header,
-            'footer'=>$this->footer
+            'footer'=>$this->footer,
+            "display_text"=>$this->action,
+            "url"=>$this->url
         ];
     }
+
 }

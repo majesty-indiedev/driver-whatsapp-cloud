@@ -2,7 +2,10 @@
 
 namespace BotMan\Drivers\Whatsapp\Extensions;
 
-class ElementSectionList
+use JsonSerializable;
+use BotMan\Drivers\Whatsapp\Extensions\ElementSectionListRow;
+
+class ElementSectionList implements JsonSerializable
 {
 
      /** @var string */
@@ -44,6 +47,7 @@ class ElementSectionList
      */
     public static function create($title, array $rows)
     {
+
         return new static($title, $rows);
     }
 
@@ -52,9 +56,14 @@ class ElementSectionList
      * @param  array   $rows
      */
     public function __construct($title, array $rows)
-    { 
+    {
         $this->title = $title;
-        $this->rows = $rows;
+
+        foreach ($rows as $row) {
+            if ($row instanceof ElementSectionListRow) {
+                $this->rows[] = $row->toArray();
+            }
+        }
 
     }
 

@@ -2,37 +2,63 @@
 
 namespace Botman\Drivers\Whatsapp;
 
+use BotMan\BotMan\Users\User;
+use Illuminate\Support\Collection;
 use BotMan\BotMan\Drivers\HttpDriver;
 use BotMan\BotMan\Interfaces\UserInterface;
 use BotMan\BotMan\Messages\Incoming\Answer;
-use BotMan\BotMan\Messages\Incoming\IncomingMessage;
+use BotMan\BotMan\Interfaces\VerifiesService;
+use BotMan\BotMan\Messages\Attachments\Image;
 use BotMan\BotMan\Messages\Outgoing\Question;
-use BotMan\BotMan\Users\User;
-use Illuminate\Support\Collection;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use BotMan\Drivers\Whatsapp\Extensions\ButtonTemplate as BT;
-use BotMan\Drivers\Whatsapp\Extensions\ListTemplate as LS;
-use BotMan\Drivers\Whatsapp\Extensions\InteractiveTemplate as IT;
-use BotMan\Drivers\Whatsapp\Exeptions\WhatsappConnectionException;
+use BotMan\BotMan\Exceptions\Base\DriverException;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use BotMan\BotMan\Messages\Incoming\IncomingMessage;
+use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
+use BotMan\Drivers\Whatsapp\Extensions\ListTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\TextTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\MediaTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\ButtonTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\StickerTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\ContactsTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\LocationTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\ReactionTemplate;
+use BotMan\Drivers\Whatsapp\Exceptions\WhatsappException;
+use BotMan\Drivers\Whatsapp\Extensions\InteractiveTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\CallToActionTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\LocationRequestTemplate;
 
-class WhatsappDriver extends HttpDriver
+class WhatsappDriver extends HttpDriver implements VerifiesService
 {
     const DRIVER_NAME = 'Whatsapp';
 
     protected $endpoint = 'messages';
 
+     /** @var string */
+     protected $signature;
+
+     /** @var array */
+     protected $messages = [];
+
     /** @var array */
     protected $templates = [
-        BT::class,
-        LS::class,
-        IT::class,
+        ButtonTemplate::class,
+        ListTemplate::class,
+        InteractiveTemplate::class,
+
         // GenericTemplate::class,
-        // ListTemplate::class,
         // ReceiptTemplate::class,
-        // MediaTemplate::class,
         // OpenGraphTemplate::class,
+
+        TextTemplate::class,
+        MediaTemplate::class,
+        ContactsTemplate::class,
+        LocationTemplate::class,
+        CallToActionTemplate::class,
+        ReactionTemplate::class,
+
+        LocationRequestTemplate::class,
     ];
 
     private $supportedAttachments = [
@@ -43,27 +69,14 @@ class WhatsappDriver extends HttpDriver
     ];
 
     /**
-     * @var array
-     */
-    public $messages = [];
-
-    /**
      * @param Request $request
      * @return void
      */
     public function buildPayload(Request $request)
     {
-        $content = json_decode($request->getContent(), true);
-        if (isset($content['entry'][0]['changes'][0]['value'])) {
-            $this->payload = new ParameterBag((array) $content['entry'][0]['changes'][0]['value']);
-        } else {
-            // Handle the error or provide a default value
-            $this->payload = new ParameterBag([]);
-            // Log an error message or throw an exception if necessary
-        }
-        // $this->payload = new ParameterBag((array) json_decode($request->getContent(), true));
-        // $this->payload = new ParameterBag((array) json_decode($request->getContent(), true)['entry'][0]['changes'][0]['value']);
-        $this->event = Collection::make((array) $this->payload->get('messages') ? (array) $this->payload->get('messages')[0] : $this->payload);
+        $this->payload =Collection::make((array)json_decode($request->getContent(), true));
+        $this->event = Collection::make(isset($this->payload->get('entry')[0]['changes'][0]['value']['messages'])?(array)$this->payload->get('entry')[0]['changes'][0]['value']['messages'][0]:null);
+        $this->signature = $request->headers->get('X_HUB_SIGNATURE_256','');
         $this->content = $request->getContent();
         $this->config = Collection::make($this->config->get('whatsapp', []));
     }
@@ -75,79 +88,216 @@ class WhatsappDriver extends HttpDriver
      */
     public function matchesRequest()
     {
-       return !is_null($this->payload->get('contacts')) || !is_null($this->event->get('from'));
+        $validSignature = empty($this->config->get('app_secret')) || $this->validateSignature();
+        $machesDriverMessage=!is_null($this->payload->get('contacts')) || !is_null($this->event->get('from'));
+
+        return $machesDriverMessage && $validSignature;
     }
 
     /**
-     * Retrieve the chat message(s).
+     * @param  Request  $request
+     * @return null|Response
+     */
+    public function verifyRequest(Request $request)
+    {
+        if($request->get('hub_mode') === 'subscribe'){
+            if ($request->get('hub_verify_token') === $this->config->get('verification')) {
+                return (new Response($request->get('hub_challenge'),200))->send();
+            }
+            else{
+                return (new Response('Invalid verification token', 403))->send();
+            }
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    protected function validateSignature()
+    {
+        return hash_equals(
+            $this->signature,
+            'sha256=' . hash_hmac('sha256', $this->content, $this->config->get('app_secret'))
+        );
+    }
+
+     /**
+     * @param  IncomingMessage  $matchingMessage
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function markSeen(IncomingMessage $matchingMessage)
+    {
+        $payload=[
+            "messaging_product"=>"whatsapp",
+            "status"=>"read",
+            "message_id"=>$matchingMessage->getExtras('id')
+        ];
+
+        if ($this->config->get('throw_http_exceptions')) {
+            return $this->postWithExceptionHandling($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
+        }
+
+        return $this->http->post($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
+
+    }
+
+    /**
+     * @param  IncomingMessage  $matchingMessage
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function types(IncomingMessage $matchingMessage)
+    {
+        // Do nothing for now
+    }
+
+    /**
+     * Retrieve the chat message.
      *
      * @return array
      */
     public function getMessages()
     {
         if (empty($this->messages)) {
-            if ($this->event->get('type') == 'text') {
-                $this->messages = [
-                    new IncomingMessage(
-                        $this->event->get('text')['body'],
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            } elseif ($this->event->get('type') == 'image') {
-                $this->messages = [
-                    new IncomingMessage(
-                        isset($this->event->get('image')['caption']) ? $this->event->get('image')['caption'] : '',
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            } elseif ($this->event->get('type') == 'document') {
-                $this->messages = [
-                    new IncomingMessage(
-                        isset($this->event->get('document')['caption']) ? $this->event->get('document')['caption'] : '',
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            } elseif ($this->event->get('type') == 'location') {
-                $this->messages = [
-                    new IncomingMessage(
-                        isset($this->event->get('location')['name']) ? $this->event->get('location')['name'] : '',
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            } elseif ($this->event->get('type') == 'button') {
-                $this->messages = [
-                    new IncomingMessage(
-                        $this->event->get('button')['text'],
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            }
-
-            elseif ($this->event->get('type') == 'interactive') {
-                $this->messages = [
-                    new IncomingMessage(
-                        isset($this->event->get('interactive')['button_reply'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'],
-                        $this->event->get('from'),
-                        $this->event->get('from'),
-                        $this->payload
-                    )
-                ];
-            }
-
-        
+            $this->loadMessages();
         }
 
         return $this->messages;
+    }
+
+    /**
+     * Load Whatsapp messages.
+     */
+    protected function loadMessages()
+    {
+        if ($this->event->get('type') == 'text') {
+            $message=new IncomingMessage(
+                $this->event->get('text')['body'],
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        } elseif ($this->event->get('type') == 'image') {
+            $message=new IncomingMessage(
+                isset($this->event->get('image')['caption']) ? $this->event->get('image')['caption'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+                );
+        } elseif ($this->event->get('type') == 'document') {
+            $message=new IncomingMessage(
+                isset($this->event->get('document')['caption']) ? $this->event->get('document')['caption'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        } elseif ($this->event->get('type') == 'audio') {
+            $message=new IncomingMessage(
+                '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        } elseif ($this->event->get('type') == 'video') {
+            $message=new IncomingMessage(
+                isset($this->event->get('video')['caption']) ? $this->event->get('video')['caption'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }elseif ($this->event->get('type') == 'location') {
+            $message=new IncomingMessage(
+                isset($this->event->get('location')['name']) ? $this->event->get('location')['name'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
+        elseif ($this->event->get('type') == 'contacts') {
+            $message=new IncomingMessage(
+                isset($this->event->get('contacts')[0]['formatted_name']) ? $this->event->get('contacts')[0]['formatted_name'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
+        elseif ($this->event->get('type') == 'reaction') {
+            $message=new IncomingMessage(
+                isset($this->event->get('reaction')['emoji']) ? $this->event->get('reaction')['emoji'] : '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
+        elseif ($this->event->get('type') == 'button') {
+            $message=new IncomingMessage(
+                $this->event->get('button')['text'],
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
+        elseif ($this->event->get('type') == 'interactive') {
+            $message=new IncomingMessage(
+                isset($this->event->get('interactive')['button_reply'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'],
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+
+            $choice_id=isset($this->event->get('interactive')['button_reply']['id'])?$this->event->get('interactive')['button_reply']['id']:$this->event->get('interactive')['list_reply']['id'];
+            $choice_text=isset($this->event->get('interactive')['button_reply']['title'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'];
+            $message->addExtras('choice_id',$choice_id);
+            $message->addExtras('choice_text',$choice_text);
+        }
+
+        if (!empty($message)) {
+            $this->messages = [$message->addExtras('id',$this->getMessageID())];
+        }
+
+
+    }
+
+     /**
+     * @return array|Collection|null
+     */
+    protected function getMessagePayload(){
+        return isset($this->payload->get('entry')[0]['changes'][0]['value'])?$this->payload->get('entry')[0]['changes'][0]['value']:null;
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getMessageSender()
+    {
+        if (isset($this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'])) {
+            return $this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'];
+        } else{
+            return null;
+        }
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getMessageRecipient()
+    {
+        if (!is_null($this->event->get('from'))) {
+            return $this->event->get('from');
+        } else{
+            return null;
+        }
+    }
+
+      /**
+     * @return string|null
+     */
+    protected function getMessageID()
+    {
+        if (!is_null($this->event->get('id'))) {
+            return $this->event->get('id');
+        } else{
+            return null;
+        }
     }
 
     /**
@@ -176,7 +326,26 @@ class WhatsappDriver extends HttpDriver
      return Answer::create($message->getText())->setMessage($message);
     }
 
-    /**
+
+      /**
+     * Convert a Question object into a valid Whatsapp
+     * quick reply response object.
+     *
+     * @param  Question  $question
+     * @return array
+     */
+    private function convertQuestion(Question $question)
+    {
+        return [
+            'type' =>'text',
+            'text' => [
+                'body' => $question->getText(),
+            ]
+        ];
+    }
+
+
+        /**
      * @param string|\BotMan\BotMan\Messages\Outgoing\Question $message
      * @param IncomingMessage $matchingMessage
      * @param array $additionalParameters
@@ -193,59 +362,30 @@ class WhatsappDriver extends HttpDriver
         ], $additionalParameters);
 
         if ($message instanceof Question) {
-            $parameters['text'] = [
-                'body' => $message->getText()
-            ];
-            $parameters['type'] = 'text';
-        } elseif (is_object($message) && in_array(get_class($message), $this->templates)) {
-            if (get_class($message) === BT::class) {
-                $parameters['type'] = 'interactive';
-                $parameters['interactive'] = [
-                    'type' => 'button',
-                    'body' => [
-                        'text' => $message->text
+            $parameters = array_replace_recursive($parameters,$this->convertQuestion($message));
+        }
+        elseif (is_object($message) && in_array(get_class($message), $this->templates)) {
+            $parameters = array_replace_recursive($parameters,$message->toArray());
+        }
+        elseif ($message instanceof OutgoingMessage) {
+            $attachment = $message->getAttachment();
+            if (!is_null($attachment) && in_array(get_class($attachment), $this->supportedAttachments)) {
+                $attachmentType = strtolower(basename(str_replace('\\', '/', get_class($attachment))));
+                $array=[
+                    'type' => $attachmentType,
+                     $attachmentType => [
+                         'link'=>$attachment->getUrl(),
                     ],
-                    'action' => [
-                        'buttons' => $message->buttons,
-                    ]
                 ];
-            } else if (get_class($message) === LS::class) {
-                $parameters['type'] = 'interactive';
-                $parameters['interactive'] = [
-                    'type' => 'list',
-
-                    'header' => [
-                        'type' => 'text',
-                        'text' => $message->header,
-                    ],
-                    'body' => [
-                        'text' => $message->text
-                    ],
-
-                    'footer' => [
-                        'text' => $message->footer,
-                    ],
-                    
-                    'action' => [
-                        'button' => $message->action,
-                        'sections' => $message->sections,
-                    ]
-                ];
-            } else if (get_class($message) === IT::class) {
-                        $parameters['type'] = 'template';
-                        $parameters['template'] = [
-                            'name' => $message->templateId,
-                            'language' => array('code' => 'id'),
-                            'components' => $message->components,
-                    ];
-                    
+              $parameters = array_replace_recursive($parameters,$array);
             } else {
                 $parameters['text'] = [
-                    'body' => $message->text,
+                    'body' => $message->getText(),
                 ];
                 $parameters['type'] = 'text';
             }
-        } else {
+        }
+        else {
             $parameters['text'] = [
                 'body' => $message->getText(),
             ];
@@ -253,6 +393,7 @@ class WhatsappDriver extends HttpDriver
         }
         return $parameters;
     }
+
 
     /**
      * @param mixed $payload
@@ -272,7 +413,6 @@ class WhatsappDriver extends HttpDriver
      */
     public function isConfigured()
     {
-        // TODO: Check token existence from DB?
         return !empty($this->config->get('url'));
     }
 
@@ -304,10 +444,6 @@ class WhatsappDriver extends HttpDriver
 
     public function buildAuthHeader()
     {
-        /*
-        * TODO: Token should from DB & Re-Fetch before expired with Artisan command scheduler
-        */
-        // $token = 'YOUR-BEARER-TOKEN-HERE';
         $token = $this->config->get('token');
         return [
             "Authorization: Bearer " . $token,
@@ -324,8 +460,9 @@ class WhatsappDriver extends HttpDriver
      * @param bool $asJSON
      * @param int $retryCount
      * @return Response
-     * @throws \Modules\ChatBot\Drivers\Whatsapp\WhatsappConnectionException
      */
+    // * @throws WhatsappConnectionException
+
     private function postWithExceptionHandling(
         $url,
         array $urlParameters = [],
@@ -341,18 +478,19 @@ class WhatsappDriver extends HttpDriver
             return $responseData;
         }
 
-        $responseData['errors']['code'] = $responseData['errors']['code'] ?? 'No description from Vendor';
-        $responseData['errors']['title'] = $responseData['errors']['title'] ?? 'No error code from Vendor';
+        $responseData['error']['code'] = $responseData['error']['code'] ?? 'No description from Vendor';
+        $responseData['error']['message'] = $responseData['error']['message'] ?? 'No error code from Vendor';
+        $responseData['error']['type'] = $responseData['error']['type'] ?? 'No type from Vendor';
 
         $message = "Status Code: {$response->getStatusCode()}\n".
-            "Description: ".print_r($responseData['errors']['title'], true)."\n".
-            "Error Code: ".print_r($responseData['errors']['code'], true)."\n".
+            "Description: ".print_r($responseData['error']['message'], true)."\n".
+            "Error Code: ".print_r($responseData['error']['code'], true)."\n".
+            "Error Type: ".print_r($responseData['error']['type'], true)."\n".
             "URL: $url\n".
             "URL Parameters: ".print_r($urlParameters, true)."\n".
             "Post Parameters: ".print_r($postParameters, true)."\n".
             "Headers: ". print_r($headers, true)."\n";
 
-        throw new WhatsappConnectionException($message);
-        
+        throw new WhatsappException($message);
     }
 }
