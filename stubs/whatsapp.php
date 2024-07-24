@@ -44,7 +44,7 @@ return [
      |--------------------------------------------------------------------------
      | Your Whatsapp phone_number_id
      */
-    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
+    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
 
 
      /*

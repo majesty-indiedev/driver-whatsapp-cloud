@@ -38,7 +38,7 @@ class LocationTemplate implements JsonSerializable,WebAccess
      *
      * @return string
      */
-    public function getContextMessageID()
+    public function getContextMessageId()
     {
         if (empty($this->context_message_id)) {
             throw new \UnexpectedValueException('This message does not contain a context_message_id');
@@ -52,7 +52,7 @@ class LocationTemplate implements JsonSerializable,WebAccess
      * @param  string  $context_message_id
      * @return $this
      */
-    public function setContextMessageID($context_message_id)
+    public function contextMessageId($context_message_id)
     {
         $this->context_message_id = $context_message_id;
 
