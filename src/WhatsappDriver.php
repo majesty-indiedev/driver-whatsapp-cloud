@@ -7,8 +7,11 @@ use Illuminate\Support\Collection;
 use BotMan\BotMan\Drivers\HttpDriver;
 use BotMan\BotMan\Interfaces\UserInterface;
 use BotMan\BotMan\Messages\Incoming\Answer;
+use BotMan\BotMan\Messages\Attachments\File;
 use BotMan\BotMan\Interfaces\VerifiesService;
+use BotMan\BotMan\Messages\Attachments\Audio;
 use BotMan\BotMan\Messages\Attachments\Image;
+use BotMan\BotMan\Messages\Attachments\Video;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -57,7 +60,6 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         LocationTemplate::class,
         CallToActionTemplate::class,
         ReactionTemplate::class,
-
         LocationRequestTemplate::class,
     ];
 
@@ -139,15 +141,6 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
 
         return $this->http->post($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
 
-    }
-
-    /**
-     * @param  IncomingMessage  $matchingMessage
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function types(IncomingMessage $matchingMessage)
-    {
-        // Do nothing for now
     }
 
     /**
@@ -249,6 +242,14 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             $message->addExtras('choice_id',$choice_id);
             $message->addExtras('choice_text',$choice_text);
         }
+       else{
+            $message=new IncomingMessage(
+                '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
 
         if (!empty($message)) {
             $this->messages = [$message->addExtras('id',$this->getMessageID())];
@@ -307,7 +308,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     public function getUser(IncomingMessage $matchingMessage)
     {
-        $contact = Collection::make($matchingMessage->getPayload()->get('contacts')[0]);
+        $contact = Collection::make($matchingMessage->getPayload()['contacts'][0]);
         return new User(
             $contact->get('wa_id'),
             $contact->get('profile')['name'],
@@ -371,6 +372,9 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             $attachment = $message->getAttachment();
             if (!is_null($attachment) && in_array(get_class($attachment), $this->supportedAttachments)) {
                 $attachmentType = strtolower(basename(str_replace('\\', '/', get_class($attachment))));
+                if($attachmentType=='file'){
+                    $attachmentType='document';
+                }
                 $array=[
                     'type' => $attachmentType,
                      $attachmentType => [

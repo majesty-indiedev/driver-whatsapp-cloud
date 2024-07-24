@@ -126,4 +126,4 @@ If you discover a security vulnerability within BotMan, please send an e-mail to
 
 ## License
 
-BotMan is free software distributed under the terms of the MIT license.
+BotMan is free software distributed under the terms of the [MIT license](https://github.com/mohapinkepane/driver-whatsapp-cloud//blob/README.md).
