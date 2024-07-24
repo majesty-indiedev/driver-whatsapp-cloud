@@ -80,7 +80,7 @@ This is the contents of the file that will be published at config/botman/whatsap
         |--------------------------------------------------------------------------
         | Your Whatsapp phone_number_id
         */
-        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
+        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
 
 
         /*
@@ -241,26 +241,26 @@ You can send a list message (in a conversation) as follows
 
 You can send a reply button message (in a conversation) as follows
 
- $this->ask(ButtonTemplate::create('How do you like BotMan so far?')
-        ->addFooter('Powered by BotMan.io')
-        ->addHeader(
-                ElementButtonHeader::create('image',[
-                    'link'=>"https://botman.io/img/botman.png",
-                ])
-        )
-        ->addButtons([
-        ElementButton::create(1,'Quite good'),
-        ElementButton::create(2,'Love it')
-    ]),function(Answer $answer) {
-        $payload = $answer->getMessage()->getPayload();//Get Payload
-        $choice_id=$answer->getMessage()->getExtras('choice_id');//You can the get choice ID like this
-        $choice_text=$answer->getMessage()->getExtras('choice_text');
-        $choice=$answer->getText();
-        $this->say(
-                TextTemplate::create('Nice.You choose '.$choice)
-                ->contextMessageId($answer->getMessage()->getExtras('id'))
-            );
-    });
+    $this->ask(ButtonTemplate::create('How do you like BotMan so far?')
+            ->addFooter('Powered by BotMan.io')
+            ->addHeader(
+                    ElementButtonHeader::create('image',[
+                        'link'=>"https://botman.io/img/botman.png",
+                    ])
+            )
+            ->addButtons([
+            ElementButton::create(1,'Quite good'),
+            ElementButton::create(2,'Love it')
+        ]),function(Answer $answer) {
+            $payload = $answer->getMessage()->getPayload();//Get Payload
+            $choice_id=$answer->getMessage()->getExtras('choice_id');//You can the get choice ID like this
+            $choice_text=$answer->getMessage()->getExtras('choice_text');
+            $choice=$answer->getText();
+            $this->say(
+                    TextTemplate::create('Nice.You choose '.$choice)
+                    ->contextMessageId($answer->getMessage()->getExtras('id'))
+                );
+        });
 
 The header can be of type text,image,video or document
 
