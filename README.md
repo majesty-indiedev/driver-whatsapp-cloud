@@ -486,6 +486,32 @@ In a coversation
         $this->say('Nice to meet you '.$this->firstname);
     });
 
+## Welcome messages
+
+If you enable this [feature](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/) and a user messages you, the WhatsApp client checks for an existing message thread between the user and your business phone number. If there is none, the client triggers a messages webhook with type set to request_welcome.
+
+You can read and act on the message as follows
+
+In receiving(recieved) Middleware
+
+    public function received(IncomingMessage $message,$next, BotMan $bot)
+    {
+        if($bot->getDriver()->getName()=='Whatsapp'){
+            
+              if($message->getExtras('type') == 'request_welcome'){
+                $bot->say('Hello ! Welcome to my bot',[$message->getRecipient()]);
+              }
+        }
+        return $next($message);
+    }
+
+In a coversation
+
+    if($this->bot->getMessage()->getExtras('type') == 'request_welcome'){
+        $this->say('Hello ! Welcome to my bot');
+    }
+
+If you do not handle it, the message will be handled by the botman global fallback route - if it available that is.
 
 ## Contributing
 Please see [CONTRIBUTING](https://github.com/mohapinkepane/driver-whatsapp-cloud//blob/master/CONTRIBUTING.md) for details.

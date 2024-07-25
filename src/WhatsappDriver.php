@@ -242,7 +242,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             $message->addExtras('choice_id',$choice_id);
             $message->addExtras('choice_text',$choice_text);
         }
-       else{
+        elseif ($this->event->get('type') == 'request_welcome') {
             $message=new IncomingMessage(
                 '',
                 $this->getMessageSender(),
@@ -252,9 +252,12 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         }
 
         if (!empty($message)) {
-            $this->messages = [$message->addExtras('id',$this->getMessageID())];
+            $this->messages = [
+            $message
+            ->addExtras('id',$this->getMessageID())
+            ->addExtras('type',$this->event->get('type'))
+          ];
         }
-
 
     }
 
