@@ -126,7 +126,7 @@ This is the contents of the file that will be published at config/botman/whatsap
 
 ## Sending Whatsapp Templates
 
->Facebook is still experimenting a lot with its Whatsapp features. This is why some of them behave differently on certain platforms. General it is easy to say that all of them work within the native Whatsapp on your phones. But e.g. the List Template is not working inside the Whatsapp Desktop APP website chat and the online Messenger
+>Facebook is still experimenting a lot with its Whatsapp features. This is why some of them behave differently on certain platforms.In general it is easy to say that all of them work within the native Whatsapp App on your phones. But e.g. the List Template is not working inside the Whatsapp Desktop App.
 
 ### Text
 
@@ -166,7 +166,7 @@ It can be used in two ways
         ->url('media-url-here')
 
     2. MediaTemplate::create('media-type-here')
-        ->id('media-id-here')
+        ->id('media-id-here')//Whatsapp media id
 
 Examples below
 
@@ -304,7 +304,6 @@ You can react to messages as follows
 
 You can send contacts as follows
 
-This template can be used like this
 
     $addresses = [
         Address::create("Menlo Park", "United States"),
@@ -345,8 +344,6 @@ This template can be used like this
 
 You can send location as follows
 
-This template can be used like this
-
     $bot->reply(
         LocationTemplate::create(-122.425332, 37.758056, "Facebook HQ", "1 Hacker Way, Menlo Park, CA 94025")
     );
@@ -359,6 +356,29 @@ You can request location from clients as follows
             $payload = $answer->getMessage()->getPayload();
             \Log::info('PAYLOAD'.\json_encode($payload));
             $this->say('Thanks!');
+    });
+
+## Mark seen
+
+The markSeen() method takes a parameter of type IncomingMessage and can be use in serveral ways:
+
+In receiving(recieved) Middleware
+
+    public function received(IncomingMessage $message,$next, BotMan $bot)
+        {
+            if($bot->getDriver()->getName()=='Whatsapp'){
+                $bot->markSeen($message);
+            }
+            return $next($message);
+        }
+
+
+In a coversation
+
+    $this->ask('Hello! What is your firstname?', function(Answer $answer) {
+        $this->bot->markSeen($answer->getMessage());
+        $this->firstname = $answer->getText();
+        $this->say('Nice to meet you '.$this->firstname);
     });
 
 
