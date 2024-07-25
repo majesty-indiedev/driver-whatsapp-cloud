@@ -15,21 +15,25 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
     /** @var array */
     public $components = [];
 
-    
+    /** @var string */
+    public $language_code;
+
+
 
     /**
      * @param $text
      * @return static
      */
-    public static function create($templateId)
+    public static function create($templateId,$language_code = 'en')
     {
-        return new static($templateId);
+        return new static($templateId,$language_code);
     }
-    
 
-    public function __construct($templateId)
+
+    public function __construct($templateId,$language_code = 'en')
     {
         $this->templateId = $templateId;
+        $this->language_code = $language_code;
     }
 
     /**
@@ -69,14 +73,14 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
             'type' => 'template',
             'template' => [
                 'name' => $this->templateId,
-                'language' => ['code' => 'id'],
+                'language' => ['code' =>$this->language_code],
                 "components" => $this->components
             ],
         ];
     }
 
- 
- 
+
+
 
     /**
      * @return array
@@ -98,7 +102,7 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
             'type' => 'template',
             'template' => [
                 'name' => $this->templateId,
-                'language' => ['code' => 'id'],
+                'language' => ['code' => $this->language_code],
                 "components" => $this->components
             ],
         ];

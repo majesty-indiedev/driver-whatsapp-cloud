@@ -114,12 +114,12 @@ This is the contents of the file that will be published at config/botman/whatsap
 - [x] Audio Attachment
 - [x] Sticker Attachment
 - [x] Call To Action
+- [x] Message Templates
 - [x] Interactive Message
     - [x] List
     - [x] Button
 
 <!-- ### TODO:
-- [ ] Template Message
 - [ ] Interactive Message
     - [ ] Product
     - [ ] Product List -->
@@ -266,6 +266,111 @@ The header can be of type text,image,video or document
 
 
 ![Reply Buttons](/assets/images/reply-buttons.png)
+
+### Message Templates
+
+You can send message templates as shown in the examples below.
+These are just examples of course,but you can implement pretty much anything you want.
+
+Example (A) (using the default hello_world template) 
+
+     $this->say(InteractiveTemplate::create('hello_world','en_us')
+     ->addComponents(
+         [
+             ElementComponent::create('header',[]),
+             ElementComponent::create('body',[]),
+         ]
+     ));
+     
+Example (B) (using the default purchase_receipt_1 template) 
+
+    $this->say(InteractiveTemplate::create('purchase_receipt','en_us')
+    ->addComponents(
+        [
+            ElementComponent::create('header',[
+                    [
+                    'type'=>'document',
+                    'document'=>[
+                        "link"=>"https://pdfobject.com/pdf/sample.pdf"
+                    ]
+                ]
+            ]),
+            ElementComponent::create('body',[
+                [
+                    "type"=> "currency",
+                    "currency"=>[
+                        "fallback_value"=> "$100.99",
+                        "code"=> "USD",
+                        "amount_1000"=> 100990
+                    ]
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"Ticketbox-Thetsane Office Park,Maseru,Lesotho.",
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"ticket",
+                ]
+            ]),
+        ]
+    ));
+
+
+Example (C) (using the default fraud_alert template -in a conversation) 
+
+    $this->ask(InteractiveTemplate::create('fraud_alert','en_us')
+    ->addComponents(
+        [
+            ElementComponent::create('header',[]),
+            ElementComponent::create('body',[
+                [
+                    "type"=>"text",
+                    "text"=>"John Miller Doe",
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"Dummy Company",
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"Spooky",
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"Dummy Company",
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"D4SRT",
+                ],
+                [
+                    "type"=> "date_time",
+                    "date_time" => [
+                        "fallback_value"=> "February 25, 1977",
+                    ]
+                ],
+                [
+                    "type"=>"text",
+                    "text"=>"Dummy Merchant",
+                ],
+                [
+                    "type"=> "currency",
+                    "currency"=>[
+                        "fallback_value"=> "$100.99",
+                        "code"=> "USD",
+                        "amount_1000"=> 100990
+                    ]
+                ]
+            ]),
+        ]
+    ),
+    function(Answer $answer) {
+        $payload = $answer->getMessage()->getPayload();
+        \Log::info('PAYLOAD'.\json_encode($payload));
+        $this->say('Thanks!');
+    });
+
 
 ### Call To Action
 
