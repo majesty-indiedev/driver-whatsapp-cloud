@@ -537,7 +537,7 @@ You can send any type of message as a reply to a previous message. The previous 
 You can achieve this by chaining  the method: contextMessageId('message-id-here').Example provided below.
 
     $this->say(
-            TextMessage::create('Nice to meet you')
+            TextMessage::create('reply-here')
             ->contextMessageId('message-id-here')
         );
 
@@ -570,7 +570,7 @@ In a coversation
         $this->say('Nice to meet you '.$this->firstname);
     });
 
-##Conversational Components
+## Conversational Components
 
 >[Conversational components](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/) are in-chat features that you can enable on business phone numbers. They make it easier for WhatsApp users to interact with your business. You can configure easy-to-use commands, provide pre-written ice breakers that users can tap, and greet first time users with a welcome message.
 
