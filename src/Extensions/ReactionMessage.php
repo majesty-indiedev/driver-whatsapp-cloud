@@ -5,7 +5,7 @@ namespace BotMan\Drivers\Whatsapp\Extensions;
 use BotMan\BotMan\Interfaces\WebAccess;
 use JsonSerializable;
 
-class ReactionTemplate implements JsonSerializable,WebAccess
+class ReactionMessage implements JsonSerializable,WebAccess
 {
     /** @var string */
     protected $id;

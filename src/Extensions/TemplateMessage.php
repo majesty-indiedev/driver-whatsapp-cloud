@@ -6,7 +6,7 @@ use BotMan\BotMan\Interfaces\WebAccess;
 use Illuminate\Support\Arr;
 use JsonSerializable;
 
-class InteractiveTemplate implements JsonSerializable, WebAccess
+class TemplateMessage implements JsonSerializable, WebAccess
 {
 
      /** @var string */
@@ -17,6 +17,9 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
 
     /** @var string */
     public $language_code;
+
+     /** @var string */
+     public $context_message_id;
 
 
 
@@ -63,13 +66,40 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
     }
 
 
+      /**
+     * Get the context_message_id.
+     *
+     * @return string
+     */
+    public function getContextMessageId()
+    {
+        if (empty($this->context_message_id)) {
+            throw new \UnexpectedValueException('This message does not contain a context_message_id');
+        }
+        return $this->context_message_id;
+    }
+
+
+    /**
+     * Set the context_message_id.
+     * @param  string  $context_message_id
+     * @return $this
+     */
+    public function contextMessageId($context_message_id)
+    {
+        $this->context_message_id = $context_message_id;
+
+        return $this;
+    }
+
+
 
     /**
      * @return array
      */
     public function toArray()
     {
-        return [
+        $array = [
             'type' => 'template',
             'template' => [
                 'name' => $this->templateId,
@@ -77,6 +107,12 @@ class InteractiveTemplate implements JsonSerializable, WebAccess
                 "components" => $this->components
             ],
         ];
+
+        if(isset($this->context_message_id)){
+            $array['context']['message_id'] = $this->context_message_id;
+        }
+
+        return $array;
     }
 
 

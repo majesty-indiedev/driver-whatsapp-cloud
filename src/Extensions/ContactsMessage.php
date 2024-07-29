@@ -4,34 +4,39 @@ namespace BotMan\Drivers\Whatsapp\Extensions;
 
 use JsonSerializable;
 use BotMan\BotMan\Interfaces\WebAccess;
+use BotMan\Drivers\Whatsapp\Extensions\Contact\Contact;
 
-class LocationTemplate implements JsonSerializable,WebAccess
+class ContactsMessage implements JsonSerializable, WebAccess
 {
-    /** @var float */
-    public $longitude;
-    /** @var float */
-    public $latitude;
-    /** @var string */
-    public $name;
-    /** @var string */
-    public $address;
 
-     /** @var string */
-     public $context_message_id;
+    /** @var string */
+    public $context_message_id;
 
-    public static function create($longitude, $latitude, $name='', $address='')
+    /** @var array */
+    protected $contacts = [];
+
+    /**
+     * @param  array   $contacts
+     * @return static
+     */
+    public static function create(array $contacts)
     {
-        return new static($longitude, $latitude, $name, $address);
+
+        return new static($contacts);
     }
 
-    public function __construct($longitude, $latitude, $name='', $address='')
+    /**
+     * @param  array   $contacts
+     */
+    public function __construct(array $contacts)
     {
-        $this->longitude = $longitude;
-        $this->latitude = $latitude;
-        $this->name = $name;
-        $this->address = $address;
-    }
+        foreach ($contacts as $contact) {
+            if ($contact instanceof Contact) {
+                $this->contacts[] = $contact->toArray();
+            }
+        }
 
+    }
 
       /**
      * Get the context_message_id.
@@ -65,13 +70,8 @@ class LocationTemplate implements JsonSerializable,WebAccess
     public function toArray()
     {
         $array=[
-            "type"=>'location',
-            'location'=>[
-                'longitude' => $this->longitude,
-                'latitude' => $this->latitude,
-                'name' => $this->name,
-                'address' => $this->address,
-            ]
+            "type"=>'contacts',
+            "contacts"=>$this->contacts
         ];
 
         if(isset($this->context_message_id)){
@@ -82,6 +82,9 @@ class LocationTemplate implements JsonSerializable,WebAccess
 
     }
 
+    /**
+     * @return array
+     */
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -95,12 +98,10 @@ class LocationTemplate implements JsonSerializable,WebAccess
      */
     public function toWebDriver()
     {
-        return[
-            "type"=>'location',
-            'longitude' => $this->longitude,
-            'latitude' => $this->latitude,
-            'name' => $this->name,
-            'address' => $this->address,
+        return [
+            "type"=>'contacts',
+            "contacts"=>$this->contacts
         ];
     }
+
 }

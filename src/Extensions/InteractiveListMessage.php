@@ -6,7 +6,7 @@ use BotMan\BotMan\Interfaces\WebAccess;
 use Illuminate\Support\Arr;
 use JsonSerializable;
 
-class ListTemplate implements JsonSerializable, WebAccess
+class InteractiveListMessage implements JsonSerializable, WebAccess
 {
 
     /** @var string */

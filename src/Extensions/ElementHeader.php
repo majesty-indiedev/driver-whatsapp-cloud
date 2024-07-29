@@ -4,14 +4,14 @@ namespace BotMan\Drivers\Whatsapp\Extensions;
 
 use JsonSerializable;
 
-class ElementButtonHeader implements JsonSerializable
+class ElementHeader implements JsonSerializable
 {
     protected $type;
 
     /** @var string|array */
     protected $content;
 
-    
+
     /** @var array */
     protected $header_types = [
          "text","image","video","document"
@@ -40,8 +40,8 @@ class ElementButtonHeader implements JsonSerializable
     {
         return $this->content;
     }
-  
- 
+
+
     public function toArray()
     {
         $result = [

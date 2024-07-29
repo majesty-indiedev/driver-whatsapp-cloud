@@ -2,43 +2,47 @@
 
 namespace BotMan\Drivers\Whatsapp\Extensions;
 
-use JsonSerializable;
 use BotMan\BotMan\Interfaces\WebAccess;
-use BotMan\Drivers\Whatsapp\Extensions\Contact\Contact;
+use JsonSerializable;
 
-class ContactsTemplate implements JsonSerializable, WebAccess
+class TextMessage implements JsonSerializable, WebAccess
 {
+    /** @var string */
+    protected $id;
+
+    /** @var string */
+    public $text;
+
+    /** @var bool */
+    public $preview_url=true;
 
     /** @var string */
     public $context_message_id;
 
-    /** @var array */
-    protected $contacts = [];
 
     /**
-     * @param  array   $contacts
+     * @param $text
      * @return static
      */
-    public static function create(array $contacts)
+    public static function create($text)
     {
+        return new static($text);
+    }
 
-        return new static($contacts);
+    public function __construct($text)
+    {
+        $this->text = $text;
+    }
+
+
+    public function previewUrl($preview_url=true)
+    {
+        $this->preview_url = $preview_url;
+
+        return $this;
     }
 
     /**
-     * @param  array   $contacts
-     */
-    public function __construct(array $contacts)
-    {
-        foreach ($contacts as $contact) {
-            if ($contact instanceof Contact) {
-                $this->contacts[] = $contact->toArray();
-            }
-        }
-
-    }
-
-      /**
      * Get the context_message_id.
      *
      * @return string
@@ -64,14 +68,32 @@ class ContactsTemplate implements JsonSerializable, WebAccess
         return $this;
     }
 
+
+    /**
+     * Get the text.
+     *
+     * @return string
+     */
+    public function getText(){
+
+        if (empty($this->text)) {
+            throw new \UnexpectedValueException('This message does not contain text');
+        }
+        return $this->text;
+    }
+
+
     /**
      * @return array
      */
     public function toArray()
     {
         $array=[
-            "type"=>'contacts',
-            "contacts"=>$this->contacts
+            'type' => 'text',
+            'text' => [
+                'preview_url'=>$this->preview_url,
+                'body'=>$this->text
+            ],
         ];
 
         if(isset($this->context_message_id)){
@@ -79,7 +101,6 @@ class ContactsTemplate implements JsonSerializable, WebAccess
         }
 
         return $array;
-
     }
 
     /**
@@ -99,9 +120,8 @@ class ContactsTemplate implements JsonSerializable, WebAccess
     public function toWebDriver()
     {
         return [
-            "type"=>'contacts',
-            "contacts"=>$this->contacts
+            'message_id'=>isset($this->context_message_id)?$this->context_message_id:null,
+            'text' => $this->text,
         ];
     }
-
 }

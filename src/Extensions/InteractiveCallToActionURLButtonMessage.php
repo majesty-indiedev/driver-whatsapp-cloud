@@ -4,37 +4,47 @@ namespace BotMan\Drivers\Whatsapp\Extensions;
 
 use JsonSerializable;
 use BotMan\BotMan\Interfaces\WebAccess;
-use BotMan\Drivers\Whatsapp\Extensions\ElementButtonHeader;
+use BotMan\Drivers\Whatsapp\Extensions\ElementHeader;
 
-class ButtonTemplate implements JsonSerializable, WebAccess
+class InteractiveCallToActionURLButtonMessage implements JsonSerializable, WebAccess
 {
+
     /** @var string */
     protected $id;
 
     /** @var string */
     public $text;
 
-    /** @var array */
-    public $buttons = [];
-
      /** @var string */
      public $footer;
 
+       /** @var string */
+    public $action;
+
+    /** @var string */
+    public $url;
+
+
     /** @var array */
      public $header=[];
+
+      /** @var string */
+    public $context_message_id;
 
     /**
      * @param $text
      * @return static
      */
-    public static function create($text)
+    public static function create($text,$action,$url)
     {
-        return new static($text);
+        return new static($text,$action,$url);
     }
 
-    public function __construct($text)
+    public function __construct($text,$action,$url)
     {
         $this->text = $text;
+        $this->action = $action;
+        $this->url = $url;
     }
 
      /**
@@ -64,47 +74,46 @@ class ButtonTemplate implements JsonSerializable, WebAccess
      * @param  array $header
      * @return $this
      */
-    public function addHeader(ElementButtonHeader $header)
+    public function addHeader(ElementHeader $header)
     {
         $this->header = $header->toArray();
         return $this;
     }
 
-    /**
-     * @param  ElementButton  $button
-     * @return $this
+      /**
+     * Get the context_message_id.
+     *
+     * @return string
      */
-    public function addButton(ElementButton $button)
+    public function getContextMessageId()
     {
-        $this->buttons[] = $button->toArray();
-
-        return $this;
-    }
-
-    /**
-     * @param  array  $buttons
-     * @return $this
-     */
-    public function addButtons(array $buttons)
-    {
-        foreach ($buttons as $button) {
-            if ($button instanceof ElementButton) {
-                $this->buttons[] = $button->toArray();
-            }
+        if (empty($this->context_message_id)) {
+            throw new \UnexpectedValueException('This message does not contain a context_message_id');
         }
+        return $this->context_message_id;
+    }
+
+
+    /**
+     * Set the context_message_id.
+     * @param  string  $context_message_id
+     * @return $this
+     */
+    public function contextMessageId($context_message_id)
+    {
+        $this->context_message_id = $context_message_id;
 
         return $this;
     }
-
     /**
      * @return array
      */
     public function toArray()
     {
-        return [
+        $array = [
             'type' => 'interactive',
             'interactive' => [
-                'type'=>"button",
+                "type"=>"cta_url",
                 'header' => $this->header,
                 'body' => [
                     "text"=>$this->text
@@ -113,10 +122,20 @@ class ButtonTemplate implements JsonSerializable, WebAccess
                     "text"=>$this->footer
                 ],
                 'action' => [
-                    'buttons' => $this->buttons,
+                        "name"=>"cta_url",
+                        "parameters"=>[
+                            "display_text"=>$this->action,
+                            "url"=>$this->url
+                        ]
                 ]
             ],
         ];
+
+        if(isset($this->context_message_id)){
+            $array['context']['message_id'] = $this->context_message_id;
+        }
+
+        return $array;
     }
 
     /**
@@ -136,11 +155,14 @@ class ButtonTemplate implements JsonSerializable, WebAccess
     public function toWebDriver()
     {
         return [
-            'type' => 'buttons',
+            'type' => 'cta_url',
             'text' => $this->text,
             'buttons' => $this->buttons,
             'header'=>$this->header,
-            'footer'=>$this->footer
+            'footer'=>$this->footer,
+            "display_text"=>$this->action,
+            "url"=>$this->url
         ];
     }
+
 }

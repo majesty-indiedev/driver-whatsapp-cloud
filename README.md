@@ -80,7 +80,7 @@ This is the contents of the file that will be published at config/botman/whatsap
         |--------------------------------------------------------------------------
         | Your Whatsapp phone_number_id
         */
-        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
+        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
 
 
         /*
@@ -97,6 +97,41 @@ This is the contents of the file that will be published at config/botman/whatsap
         | Do you want the driver to throw custom(driver) exceptions or the default exceptions
         */
         'throw_http_exceptions' => true,
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Conversational Components
+        |--------------------------------------------------------------------------
+        | Configure whatsapp conversational components
+        | See https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components
+        */
+        'conversational_components' => [
+            /*
+            | Enable or disable whatsapp welcome messages
+            */
+            'enable_welcome_message' => false,
+
+            /*
+            | Whatsapp commands list
+            */
+            "commands"=> [
+                    [
+                    "command_name"=> "hello",
+                        "command_description"=> "Say hello",
+                    ],
+                    [
+                    "command_name"=> "help",
+                        "command_description"=> "Request help",
+                    ]
+                ],
+
+            /*
+            | Whatsapp prompts (Ice breakers) list
+            */
+            "prompts"=> ["Book a flight","plan a vacation"],
+        ]
+
     ];
 
 
@@ -105,8 +140,8 @@ This is the contents of the file that will be published at config/botman/whatsap
 - [x] Text Message
 - [x] Contact Message
 - [x] Location Message
-- [x] Location Request Message
 - [x] Reaction Message
+- [x] Template Message
 - [x] Image Attachment
 - [x] Document Attachment
 - [x] Location Attachment
@@ -114,26 +149,28 @@ This is the contents of the file that will be published at config/botman/whatsap
 - [x] Audio Attachment
 - [x] Sticker Attachment
 - [x] Call To Action
-- [x] Message Templates
-- [x] Interactive Message
+- [x] Interactive Messages
     - [x] List
-    - [x] Button
+    - [x] Reply Button
+    - [x] Location Request
+    - [x] Flows
+    
 
 <!-- ### TODO:
 - [ ] Interactive Message
     - [ ] Product
     - [ ] Product List -->
 
-## Sending Whatsapp Templates
+## Sending Whatsapp Messages
 
->Facebook is still experimenting a lot with its Whatsapp features. This is why some of them behave differently on certain platforms.In general it is easy to say that all of them work within the native Whatsapp App on your phones. But e.g. the List Template is not working inside the Whatsapp Desktop App.
+>Facebook is still experimenting a lot with its Whatsapp features. This is why some of them behave differently on certain platforms.In general it is easy to say that all of them work within the native Whatsapp App on your phones. But e.g. the List message is not working inside the Whatsapp Desktop App.
 
 ### Text
 
 You can send text as follows
 
     $bot->reply(
-        TextTemplate::create('Please visit https://youtu.be/hpltvTEiRrY to inspire your day!')
+        TextMessage::create('Please visit https://youtu.be/hpltvTEiRrY to inspire your day!')
         ->previewUrl(true)//Allows whatsapp to show the preview of the url(video in this case)
      );
 
@@ -142,7 +179,7 @@ OR more powerfully in a conversation like this
     $this->ask('Hello! What is your firstname?', function(Answer $answer) {
         $this->firstname = $answer->getText();
         $this->say(
-                TextTemplate::create('Nice to meet you '.$this->firstname)
+                TextMessage::create('Nice to meet you '.$this->firstname)
                 ->contextMessageId($answer->getMessage()->getExtras('id'))
             );
     });
@@ -157,43 +194,42 @@ This is to add message context to achieve something like this
 You can still attach media to messages like the docs say [here](https://botman.io/2.0/sending#attachments)
 ,but this will limit you to images,videos,audio and files.
 
-ALTERNATIVELY there is a Media Temblate (Different from facebook driver's) 
-it supports video,image,document,sticker and audio.The cool thing about it is that you can add caption and filename where applicable.You can also chain the contextMessageId() method to provide context.
+ALTERNATIVELY there is a MediaMessage class.it supports video,image,document,sticker and audio.The cool thing about it is that you can add caption and filename where applicable.You can also chain the contextMessageId() method to provide context.
 
 It can be used in two ways
 
-    1. MediaTemplate::create('media-type-here')
+    1. MediaMessage::create('media-type-here')
         ->url('media-url-here')
 
-    2. MediaTemplate::create('media-type-here')
+    2. MediaMessage::create('media-type-here')
         ->id('media-id-here')//Whatsapp media id
 
 Examples below
 
     $bot->reply(
-        MediaTemplate::create('image')
+        MediaMessage::create('image')
     ->url('https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg')
     ->caption('This is a cool image!')
     );
 
     $bot->reply(
-        MediaTemplate::create('audio')
+        MediaMessage::create('audio')
     ->url('https://samplelib.com/lib/preview/mp3/sample-15s.mp3')
     );
 
     $bot->reply(
-        MediaTemplate::create('document')
+        MediaMessage::create('document')
     ->url('https://pdfobject.com/pdf/sample.pdf')
     ->caption('This is a cool Document!')
     );
 
     $bot->reply(
-        MediaTemplate::create('sticker')
+        MediaMessage::create('sticker')
     ->url('https://stickermaker.s3.eu-west-1.amazonaws.com/storage/uploads/sticker-pack/meme-pack-3/ sticker_18.webp')
     );
 
     $bot->reply(
-        MediaTemplate::create('video')
+        MediaMessage::create('video')
     ->url('https://sample-videos.com/video321/mp4/480/big_buck_bunny_480p_10mb.mp4')
     ->caption('This is a cool Video!')
     );
@@ -204,7 +240,7 @@ Examples below
 
 You can send a list message (in a conversation) as follows
 
-     $this->ask(ListTemplate::create("Here is your  list of current Ticketbox listings",
+     $this->ask(InteractiveListMessage::create("Here is your  list of current Ticketbox listings",
             'Ticketbox listings',
             'The best place to buy tickets online'
             ,'View listings')
@@ -228,7 +264,7 @@ You can send a list message (in a conversation) as follows
         $choice_text=$answer->getMessage()->getExtras('choice_text');
         $choice=$answer->getText();
         $this->say(
-                TextTemplate::create('Nice.You choose '.$choice)
+                TextMessage::create('Nice.You choose '.$choice)
                 ->contextMessageId($answer->getMessage()->getExtras('id'))
             );
      });
@@ -241,10 +277,10 @@ You can send a list message (in a conversation) as follows
 
 You can send a reply button message (in a conversation) as follows
 
-    $this->ask(ButtonTemplate::create('How do you like BotMan so far?')
+    $this->ask(InteractiveReplyButtonsMessage::create('How do you like BotMan so far?')
             ->addFooter('Powered by BotMan.io')
             ->addHeader(
-                    ElementButtonHeader::create('image',[
+                    ElementHeader::create('image',[
                         'link'=>"https://botman.io/img/botman.png",
                     ])
             )
@@ -257,7 +293,7 @@ You can send a reply button message (in a conversation) as follows
             $choice_text=$answer->getMessage()->getExtras('choice_text');
             $choice=$answer->getText();
             $this->say(
-                    TextTemplate::create('Nice.You choose '.$choice)
+                    TextMessage::create('Nice.You choose '.$choice)
                     ->contextMessageId($answer->getMessage()->getExtras('id'))
                 );
         });
@@ -267,14 +303,44 @@ The header can be of type text,image,video or document
 
 ![Reply Buttons](/assets/images/reply-buttons.png)
 
-### Message Templates
+### Flows
 
-You can send message templates as shown in the examples below.
+You can send a flow message (in a conversation) as follows
+
+    $this->ask(FlowMessage::create(
+            'FLOW_ID',//Unique ID of the Flow provided by WhatsApp
+            'FLOW_TOKEN',//Generated by the business to serve as an identifier
+            'Take a quick survey',//Text on the CTA button.
+            'How do you like BotMan so far?',//flow body text
+            'navigate'// Flow action -> navigate is default
+        )
+        ->addFooter('Powered by BotMan.io')
+        ->addHeader(
+                    ElementHeader::create('image',[
+                        'link'=>"https://botman.io/img/botman.png",
+                    ])
+            )
+        ->addActionPayload(
+            ElementFlowActionPayload::create('RECOMMEND' //First screen name
+            ,[
+                'title' => 'hello',
+            ]//Payload)
+        )
+        ,function(Answer $answer) {
+         $payload = $answer->getMessage()->getPayload();
+         $this->say('Thanks!');
+    });
+
+The header can be of type text,image,video or document
+
+### Template
+
+You can send a template message as shown in the examples below.
 These are just examples of course,but you can implement pretty much anything you want.
 
 Example (A) (using the default hello_world template) 
 
-     $this->say(InteractiveTemplate::create('hello_world','en_us')
+     $this->say(TemplateMessage::create('hello_world','en_us')
      ->addComponents(
          [
              ElementComponent::create('header',[]),
@@ -284,7 +350,7 @@ Example (A) (using the default hello_world template)
      
 Example (B) (using the default purchase_receipt_1 template) 
 
-    $this->say(InteractiveTemplate::create('purchase_receipt','en_us')
+    $this->say(TemplateMessage::create('purchase_receipt','en_us')
     ->addComponents(
         [
             ElementComponent::create('header',[
@@ -319,7 +385,7 @@ Example (B) (using the default purchase_receipt_1 template)
 
 Example (C) (using the default fraud_alert template -in a conversation) 
 
-    $this->ask(InteractiveTemplate::create('fraud_alert','en_us')
+    $this->ask(TemplateMessage::create('fraud_alert','en_us')
     ->addComponents(
         [
             ElementComponent::create('header',[]),
@@ -376,14 +442,14 @@ Example (C) (using the default fraud_alert template -in a conversation)
 
 You can send a call to action as follows
 
-    $bot->reply(CallToActionTemplate::create(
+    $bot->reply(InteractiveCallToActionURLButtonMessage::create(
         'Do you want to know more about BotMan?',//Call to action body
         "Visit us", //Call to action button text
         "https://botman.io"//Call to action url
     )
     ->addFooter('Powered by BotMan.io')
     ->addHeader(
-        ElementButtonHeader::create('image',[
+        ElementHeader::create('image',[
             'link'=>"https://botman.io/img/botman.png",
         ])
     ));
@@ -400,7 +466,7 @@ You can react to messages as follows
     $this->ask('Hello! Do you read me?', function(Answer $answer) {
         $message_id=$answer->getMessage()->getExtras('id');
         $this->say(
-            ReactionTemplate::create($message_id,'😀')
+            ReactionMessage::create($message_id,'😀')
         );
     });
 
@@ -439,7 +505,7 @@ You can send contacts as follows
     $person = Contact::create($addresses, "2012-08-18", $emails, $name, $org, $phones, $urls);
 
     $bot->reply(
-        ContactsTemplate::create([
+        ContactsMessage::create([
             $person
         ])
     );
@@ -450,18 +516,36 @@ You can send contacts as follows
 You can send location as follows
 
     $bot->reply(
-        LocationTemplate::create(-122.425332, 37.758056, "Facebook HQ", "1 Hacker Way, Menlo Park, CA 94025")
+        LocationMessage::create(-122.425332, 37.758056, "Facebook HQ", "1 Hacker Way, Menlo Park, CA 94025")
     );
 
 ### Location Request 
 
-You can request location from clients as follows
+You can  send a location request as follows
 
-    $this->ask(LocationRequestTemplate::create('Please share your location'), function(Answer $answer) {
+    $this->ask(LocationRequestMessage::create('Please share your location'), function(Answer $answer) {
             $payload = $answer->getMessage()->getPayload();
             \Log::info('PAYLOAD'.\json_encode($payload));
             $this->say('Thanks!');
     });
+
+
+## Message Context
+
+You can send any type of message as a reply to a previous message. The previous message will appear at the top of the new message, quoted within a contextual bubble.The limitations are discussed [here](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages).
+
+You can achieve this by chaining  the method: contextMessageId('message-id-here').Example provided below.
+
+    $this->say(
+            TextMessage::create('Nice to meet you')
+            ->contextMessageId('message-id-here')
+        );
+
+## Message ID
+
+The IncomingMessage class contains the message ID in its extras.
+You can get it by calling the method: getExtras('id') on an instance of this class.
+
 
 ## Mark seen
 
@@ -486,11 +570,22 @@ In a coversation
         $this->say('Nice to meet you '.$this->firstname);
     });
 
-## Welcome messages
+##Conversational Components
+
+>[Conversational components](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/) are in-chat features that you can enable on business phone numbers. They make it easier for WhatsApp users to interact with your business. You can configure easy-to-use commands, provide pre-written ice breakers that users can tap, and greet first time users with a welcome message.
+
+### Welcome messages
 
 If you enable this [feature](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/) and a user messages you, the WhatsApp client checks for an existing message thread between the user and your business phone number. If there is none, the client triggers a messages webhook with type set to request_welcome.
 
-You can read and act on the message as follows
+To enable/disable [welcome messages](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/) in your bot. First edit the variable enable_welcome_message in your config/botman/whatsapp.php file to suit your need.
+
+Then use the Artisan command:
+
+    php artisan botman:whatsapp:add-conversational-components
+
+
+You can read and act on the request_welcome message as follows
 
 In receiving(recieved) Middleware
 
@@ -512,6 +607,23 @@ In a coversation
     }
 
 If you do not handle it, the message will be handled by the botman global fallback route - if it available that is.
+
+
+### Commands
+
+To add [commands](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components) to your bot. First define the structure of your commands in your config/botman/whatsapp.php file. There you will find a commands demo payload. Just edit it to your needs.
+
+Then use the Artisan command:
+
+    php artisan botman:whatsapp:add-conversational-components
+
+### Prompts - Icebreakers
+
+To add [prompts](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components) to your bot. First define your prompts in your config/botman/whatsapp.php file. There you will find a prompts demo payload. Just edit it to your needs.
+
+Then use the Artisan command:
+
+    php artisan botman:whatsapp:add-conversational-components
 
 ## Contributing
 Please see [CONTRIBUTING](https://github.com/mohapinkepane/driver-whatsapp-cloud//blob/master/CONTRIBUTING.md) for details.

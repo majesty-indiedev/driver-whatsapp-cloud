@@ -2,47 +2,38 @@
 
 namespace BotMan\Drivers\Whatsapp\Extensions;
 
-use BotMan\BotMan\Interfaces\WebAccess;
 use JsonSerializable;
+use BotMan\BotMan\Interfaces\WebAccess;
 
-class TextTemplate implements JsonSerializable, WebAccess
+class  LocationMessage implements JsonSerializable,WebAccess
 {
+    /** @var float */
+    public $longitude;
+    /** @var float */
+    public $latitude;
     /** @var string */
-    protected $id;
-
+    public $name;
     /** @var string */
-    public $text;
+    public $address;
 
-    /** @var bool */
-    public $preview_url=true;
+     /** @var string */
+     public $context_message_id;
 
-    /** @var string */
-    public $context_message_id;
-
-
-    /**
-     * @param $text
-     * @return static
-     */
-    public static function create($text)
+    public static function create($longitude, $latitude, $name='', $address='')
     {
-        return new static($text);
+        return new static($longitude, $latitude, $name, $address);
     }
 
-    public function __construct($text)
+    public function __construct($longitude, $latitude, $name='', $address='')
     {
-        $this->text = $text;
+        $this->longitude = $longitude;
+        $this->latitude = $latitude;
+        $this->name = $name;
+        $this->address = $address;
     }
 
 
-    public function previewUrl($preview_url=true)
-    {
-        $this->preview_url = $preview_url;
-
-        return $this;
-    }
-
-    /**
+      /**
      * Get the context_message_id.
      *
      * @return string
@@ -68,32 +59,19 @@ class TextTemplate implements JsonSerializable, WebAccess
         return $this;
     }
 
-
-    /**
-     * Get the text.
-     *
-     * @return string
-     */
-    public function getText(){
-
-        if (empty($this->text)) {
-            throw new \UnexpectedValueException('This message does not contain text');
-        }
-        return $this->text;
-    }
-
-
     /**
      * @return array
      */
     public function toArray()
     {
         $array=[
-            'type' => 'text',
-            'text' => [
-                'preview_url'=>$this->preview_url,
-                'body'=>$this->text
-            ],
+            "type"=>'location',
+            'location'=>[
+                'longitude' => $this->longitude,
+                'latitude' => $this->latitude,
+                'name' => $this->name,
+                'address' => $this->address,
+            ]
         ];
 
         if(isset($this->context_message_id)){
@@ -101,11 +79,9 @@ class TextTemplate implements JsonSerializable, WebAccess
         }
 
         return $array;
+
     }
 
-    /**
-     * @return array
-     */
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -119,9 +95,12 @@ class TextTemplate implements JsonSerializable, WebAccess
      */
     public function toWebDriver()
     {
-        return [
-            'message_id'=>isset($this->context_message_id)?$this->context_message_id:null,
-            'text' => $this->text,
+        return[
+            "type"=>'location',
+            'longitude' => $this->longitude,
+            'latitude' => $this->latitude,
+            'name' => $this->name,
+            'address' => $this->address,
         ];
     }
 }

@@ -44,7 +44,7 @@ return [
      |--------------------------------------------------------------------------
      | Your Whatsapp phone_number_id
      */
-    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
+    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
 
 
      /*
@@ -61,4 +61,41 @@ return [
      | Do you want the driver to throw custom(driver) exceptions or the default exceptions
      */
     'throw_http_exceptions' => true,
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversational Components
+    |--------------------------------------------------------------------------
+    | Configure whatsapp conversational components
+    | See https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components
+    */
+    'conversational_components' => [
+        /*
+        | Enable or disable whatsapp welcome messages
+        */
+        'enable_welcome_message' => false,
+
+        /*
+        | Whatsapp commands list
+        */
+       "commands"=> [
+               [
+               "command_name"=> "hello",
+                   "command_description"=> "Say hello",
+               ],
+               [
+               "command_name"=> "help",
+                   "command_description"=> "Request help",
+               ]
+        ],
+
+        /*
+        | Whatsapp prompts (Ice breakers) list
+        */
+       "prompts"=> ["Book a flight","plan a vacation"],
+    ]
+
+
+
 ];

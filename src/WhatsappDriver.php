@@ -15,22 +15,22 @@ use BotMan\BotMan\Messages\Attachments\Video;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use BotMan\Drivers\Whatsapp\Extensions\TemplateMessage;
 use BotMan\BotMan\Exceptions\Base\DriverException;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use BotMan\Drivers\Whatsapp\Extensions\FlowMessage;
+use BotMan\Drivers\Whatsapp\Extensions\TextMessage;
 use BotMan\BotMan\Messages\Incoming\IncomingMessage;
 use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
-use BotMan\Drivers\Whatsapp\Extensions\ListTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\TextTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\MediaTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\ButtonTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\StickerTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\ContactsTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\LocationTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\ReactionTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\MediaMessage;
+use BotMan\Drivers\Whatsapp\Extensions\ContactsMessage;
+use BotMan\Drivers\Whatsapp\Extensions\LocationMessage;
+use BotMan\Drivers\Whatsapp\Extensions\ReactionMessage;
 use BotMan\Drivers\Whatsapp\Exceptions\WhatsappException;
-use BotMan\Drivers\Whatsapp\Extensions\InteractiveTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\CallToActionTemplate;
-use BotMan\Drivers\Whatsapp\Extensions\LocationRequestTemplate;
+use BotMan\Drivers\Whatsapp\Extensions\InteractiveListMessage;
+use BotMan\Drivers\Whatsapp\Extensions\LocationRequestMessage;
+use BotMan\Drivers\Whatsapp\Extensions\InteractiveReplyButtonsMessage;
+use BotMan\Drivers\Whatsapp\Extensions\InteractiveCallToActionURLButtonMessage;
 
 class WhatsappDriver extends HttpDriver implements VerifiesService
 {
@@ -46,21 +46,17 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
 
     /** @var array */
     protected $templates = [
-        ButtonTemplate::class,
-        ListTemplate::class,
-        InteractiveTemplate::class,
-
-        // GenericTemplate::class,
-        // ReceiptTemplate::class,
-        // OpenGraphTemplate::class,
-
-        TextTemplate::class,
-        MediaTemplate::class,
-        ContactsTemplate::class,
-        LocationTemplate::class,
-        CallToActionTemplate::class,
-        ReactionTemplate::class,
-        LocationRequestTemplate::class,
+        InteractiveReplyButtonsMessage::class,
+        InteractiveListMessage::class,
+        TemplateMessage::class,
+        TextMessage::class,
+        MediaMessage::class,
+        ContactsMessage::class,
+        LocationMessage::class,
+        InteractiveCallToActionURLButtonMessage::class,
+        ReactionMessage::class,
+        LocationRequestMessage::class,
+        FlowMessage::class,
     ];
 
     private $supportedAttachments = [
@@ -162,6 +158,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     protected function loadMessages()
     {
+
         if ($this->event->get('type') == 'text') {
             $message=new IncomingMessage(
                 $this->event->get('text')['body'],
@@ -230,19 +227,17 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             );
         }
         elseif ($this->event->get('type') == 'interactive') {
+            $message=$this->getInteractiveMessage();
+        }
+        elseif ($this->event->get('type') == 'request_welcome') {
             $message=new IncomingMessage(
-                isset($this->event->get('interactive')['button_reply'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'],
+                '',
                 $this->getMessageSender(),
                 $this->getMessageRecipient(),
                 $this->getMessagePayload()
             );
-
-            $choice_id=isset($this->event->get('interactive')['button_reply']['id'])?$this->event->get('interactive')['button_reply']['id']:$this->event->get('interactive')['list_reply']['id'];
-            $choice_text=isset($this->event->get('interactive')['button_reply']['title'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'];
-            $message->addExtras('choice_id',$choice_id);
-            $message->addExtras('choice_text',$choice_text);
         }
-        elseif ($this->event->get('type') == 'request_welcome') {
+        else{
             $message=new IncomingMessage(
                 '',
                 $this->getMessageSender(),
@@ -259,6 +254,38 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
           ];
         }
 
+
+    }
+
+
+    /**
+     * @return IncomingMessage
+     */
+    protected function getInteractiveMessage()
+    {
+        if(isset($this->event->get('interactive')['button_reply'])||isset($this->event->get('interactive')['list_reply'])){
+            $message=new IncomingMessage(
+                isset($this->event->get('interactive')['button_reply'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'],
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+
+            $choice_id=isset($this->event->get('interactive')['button_reply']['id'])?$this->event->get('interactive')['button_reply']['id']:$this->event->get('interactive')['list_reply']['id'];
+            $choice_text=isset($this->event->get('interactive')['button_reply']['title'])?$this->event->get('interactive')['button_reply']['title']:$this->event->get('interactive')['list_reply']['title'];
+            $message->addExtras('choice_id',$choice_id);
+            $message->addExtras('choice_text',$choice_text);
+        }
+        else{
+            $message=new IncomingMessage(
+                '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+        }
+
+        return $message;
     }
 
      /**

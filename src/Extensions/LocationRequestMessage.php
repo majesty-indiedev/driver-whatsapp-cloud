@@ -5,7 +5,7 @@ namespace BotMan\Drivers\Whatsapp\Extensions;
 use BotMan\BotMan\Interfaces\WebAccess;
 use JsonSerializable;
 
-class LocationRequestTemplate implements JsonSerializable, WebAccess
+class LocationRequestMessage implements JsonSerializable, WebAccess
 {
     /** @var string */
     protected $id;
