@@ -14,7 +14,7 @@ First you need to pull in the Whatsapp Driver:
 
 Next you need to add to your .env file the following entries:
 
-    WHATSAPP_TOKEN=your-whatsapp-token
+    WHATSAPP_ACCESS_TOKEN=your-whatsapp-access-token
     WHATSAPP_VERIFICATION=your-whatsapp-verification-token
     WHATSAPP_APP_SECRET=your-whatsapp-app-secret
     WHATSAPP_PHONE_NUMBER_ID=your-whatsapp-phone-number-id
@@ -49,10 +49,10 @@ This is the contents of the file that will be published at config/botman/whatsap
         |--------------------------------------------------------------------------
         | Whatsapp Token
         |--------------------------------------------------------------------------
-        | Your Whatsapp token  you received after creating
+        | Your Whatsapp access token  you received after creating
         | the application on Whatsapp(Facebook Portal).
         */
-        'token' => env('WHATSAPP_TOKEN'),
+        'token' => env('WHATSAPP_ACCESS_TOKEN'),
 
 
         /*
@@ -80,7 +80,32 @@ This is the contents of the file that will be published at config/botman/whatsap
         |--------------------------------------------------------------------------
         | Your Whatsapp phone_number_id
         */
-        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
+        'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Passphrase for whatsapp key pair
+        |--------------------------------------------------------------------------
+        | Only required if flows with end point are used,otherwise leave as is.
+        */
+        'passphrase'=>env('WHATSAPP_KEYS_PASSPHRASE'),
+        /*
+        |--------------------------------------------------------------------------
+        | Whatsapp  Public Key
+        |--------------------------------------------------------------------------
+        | Public key uploaded to  whatsapp for encryption of flow end point data.
+        | Only required if flows with end point are used,otherwise leave as is.
+        */
+        'public_key'=>env('WHATSAPP_PUBLIC_KEY'),
+        /*
+        |--------------------------------------------------------------------------
+        | Whatsapp  Private Key
+        |--------------------------------------------------------------------------
+        | Private key used for decryption of flow end point data.
+        | Only required if flows with end point are used,otherwise leave as is.
+        */
+        'private_key'=>env('WHATSAPP_PRIVATE_KEY'),
 
 
         /*
@@ -115,24 +140,26 @@ This is the contents of the file that will be published at config/botman/whatsap
             /*
             | Whatsapp commands list
             */
-            "commands"=> [
-                    [
-                    "command_name"=> "hello",
-                        "command_description"=> "Say hello",
-                    ],
-                    [
-                    "command_name"=> "help",
-                        "command_description"=> "Request help",
-                    ]
+        "commands"=> [
+                [
+                "command_name"=> "hello",
+                    "command_description"=> "Say hello",
                 ],
+                [
+                "command_name"=> "help",
+                    "command_description"=> "Request help",
+                ]
+            ],
 
             /*
             | Whatsapp prompts (Ice breakers) list
             */
-            "prompts"=> ["Book a flight","plan a vacation"],
+        "prompts"=> ["Book a flight","plan a vacation"],
         ]
 
     ];
+
+
 
 
 ## Supported Features
@@ -184,9 +211,9 @@ OR more powerfully in a conversation like this
             );
     });
 
-This is to add message context to achieve something like this
+<!-- This is to add message context to achieve something like this -->
 
-![Message Context](/assets/images/message-context.png)
+<!-- ![Message Context](/assets/images/message-context.png) -->
 
 
 ### Media
@@ -270,7 +297,7 @@ You can send a list message (in a conversation) as follows
      });
 
 
-![List](/assets/images/list.png)
+<!-- ![List](/assets/images/list.png) -->
 
 
 ### Reply Button
@@ -301,7 +328,7 @@ You can send a reply button message (in a conversation) as follows
 The header can be of type text,image,video or document
 
 
-![Reply Buttons](/assets/images/reply-buttons.png)
+<!-- ![Reply Buttons](/assets/images/reply-buttons.png) -->
 
 ### Flows
 
@@ -332,6 +359,177 @@ You can send a flow message (in a conversation) as follows
     });
 
 The header can be of type text,image,video or document
+
+### Flows with endpoint
+
+(1) Generate RSA key pair
+
+    php artisan botman:whatsapp:generate:keypair {passphrase}
+
+(2) Copy the keys and passphrase to .env file
+
+    WHATSAPP_KEYS_PASSPHRASE=passpharase_here
+    WHATSAPP_PUBLIC_KEY=public_key_here
+    WHATSAPP_PRIVATE_KEY=private_key_here
+
+
+You may need to cache configs
+
+    php artisan config:cache
+
+(3) Add key to whatsapp
+
+    php artisan botman:whatsapp:add-public-key
+
+
+(4)  Implement flow data handling logic - Using a custom controller
+
+   1. Add custom route in web.php 
+
+            Route::post('/custom-url', [CustomController::class, 'handleFlow']);//The method must be handleFlow
+        
+   2. Exclude the route from CSRF protection
+
+   3. Make a custom controller that extents Flowprocessor
+            
+            <?php
+
+            namespace App\Http\Controllers;
+            use Botman\Drivers\Whatsapp\Http\FlowProcessor;
+
+            class FlowController extends FlowProcessor
+            {
+            
+                private const SCREEN_RESPONSES = [];
+
+                /**
+                * @param array $decrypted_body
+                * @return array
+                */
+                public function getNextScreen($decrypted_body) {
+
+                        $screen = $decrypted_body['screen'] ?? null;
+                        $data = $decrypted_body['data'] ?? [];
+                        $version = $decrypted_body['version'] ?? null;
+                        $action = $decrypted_body['action'] ?? null;
+                        $flow_token = $decrypted_body['flow_token'] ?? null;
+
+                        //Custom code here
+                        if ($action === 'INIT') {
+                            return [];
+                        }
+
+
+                        if ($action === 'data_exchange') {
+                            return [];
+                        }
+                        //Custom code here
+
+                    \Log::error('Unhandled request body:', $decrypted_body);
+                    throw new \Exception('Unhandled endpoint request. Make sure you handle the request action & screen logged above.');
+
+                }
+            }
+                    
+
+(5)  Implement flow data handling logic - using [Spatie webhook client](https://github.com/spatie/laravel-webhook-client)
+
+   1. Follow and read package documentation [here](https://github.com/spatie/laravel-webhook-client)
+
+   2. Implement custom RespondsToWebhook class
+
+            <?php
+
+            namespace App\WebHooks;
+
+            use Illuminate\Http\Request;
+            use Spatie\WebhookClient\WebhookConfig;
+            use Symfony\Component\HttpFoundation\Response;
+            use Botman\Drivers\Whatsapp\Http\FlowProcessor;
+            use Spatie\WebhookClient\WebhookResponse\RespondsToWebhook;
+
+            class CustomFlowRespondsTo  extends FlowProcessor implements RespondsToWebhook
+            {
+
+                private const SCREEN_RESPONSES = [];
+
+            
+                public function respondToValidWebhook(Request $request, WebhookConfig $config): Response
+                {
+                    return $this->handleFlow($request);//Leave as it is
+                }
+
+                /**
+                * @param array $decrypted_body
+                * @return array
+                */
+                public function getNextScreen($decrypted_body) {
+
+                    $screen = $decrypted_body['screen'] ?? null;
+                    $data = $decrypted_body['data'] ?? [];
+                    $version = $decrypted_body['version'] ?? null;
+                    $action = $decrypted_body['action'] ?? null;
+                    $flow_token = $decrypted_body['flow_token'] ?? null;
+
+                    //Custom code here
+                    if ($action === 'INIT') {
+                        return [];
+                    }
+
+                    if ($action === 'data_exchange') {
+                        return [];
+                    }
+                    //Custom code here
+
+                \Log::error('Unhandled request body:', $decrypted_body);
+                throw new \Exception('Unhandled endpoint request. Make sure you handle the request action & screen logged above.');
+
+                }
+            }
+
+   3. Implement custom WebhookProfile class
+                
+            <?php
+                namespace App\WebHooks;
+                use Log;
+                use Illuminate\Http\Request;
+                use Botman\Drivers\Whatsapp\Traits\MatchesFlowProfile;
+                use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
+
+                class WhatsappFlowWebhookProfile implements WebhookProfile
+                {
+                    use MatchesFlowProfile;
+                    
+                    public function shouldProcess(Request $request): bool
+                    {
+                        return $this->matchesFlowProfile($request);
+                    }
+                }
+
+   4. Implement custom SignatureValidator class
+
+
+                <?php
+                    namespace App\WebHooks;
+
+                    use Illuminate\Http\Request;
+                    use Spatie\WebhookClient\WebhookConfig;
+                    use Spatie\WebhookClient\Exceptions\InvalidConfig;
+                    use Botman\Drivers\Whatsapp\Traits\ValidatesFlowSignature;
+                    use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
+
+                    class WhatsappSignatureValidator implements SignatureValidator
+                    {
+                        use ValidatesFlowSignature;
+                        public function isValid(Request $request, WebhookConfig $config): bool
+                        {
+                            return $this->validatesSignature($request);
+                        }
+                    }
+
+        
+
+
 
 ### Template
 
@@ -456,7 +654,7 @@ You can send a call to action as follows
 
 The header can be of type text,image,video or document
 
-![Call To Action](/assets/images/call-to-action.png)
+<!-- ![Call To Action](/assets/images/call-to-action.png) -->
 
 
 ### Reaction 

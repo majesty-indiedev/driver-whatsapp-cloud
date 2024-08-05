@@ -21,6 +21,9 @@ class TemplateMessage implements JsonSerializable, WebAccess
      /** @var string */
      public $context_message_id;
 
+     /** @var string */
+     public $category;
+
 
 
     /**
@@ -92,7 +95,17 @@ class TemplateMessage implements JsonSerializable, WebAccess
         return $this;
     }
 
+     /**
+     * Set the category.
+     * @param  string  $category
+     * @return $this
+     */
+    public function category($category)
+    {
+        $this->category = $category;
 
+        return $this;
+    }
 
     /**
      * @return array
@@ -110,6 +123,10 @@ class TemplateMessage implements JsonSerializable, WebAccess
 
         if(isset($this->context_message_id)){
             $array['context']['message_id'] = $this->context_message_id;
+        }
+
+        if(isset($this->category)){
+            $array['template']['category'] = $this->category;
         }
 
         return $array;

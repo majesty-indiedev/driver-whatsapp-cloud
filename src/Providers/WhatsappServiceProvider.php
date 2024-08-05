@@ -5,7 +5,9 @@ namespace Botman\Drivers\Whatsapp\Providers;
 use Illuminate\Support\ServiceProvider;
 use BotMan\BotMan\Drivers\DriverManager;
 use BotMan\Drivers\Whatsapp\WhatsappDriver;
+use BotMan\Drivers\Whatsapp\Commands\AddPublicKey;
 use BotMan\Studio\Providers\StudioServiceProvider;
+use BotMan\Drivers\Whatsapp\Commands\GenerateKeyPair;
 use BotMan\Drivers\Whatsapp\Commands\AddCoversationalComponents;
 
 class WhatsappServiceProvider extends ServiceProvider
@@ -24,6 +26,8 @@ class WhatsappServiceProvider extends ServiceProvider
             if ($this->app->runningInConsole()) {
                 $this->commands([
                     AddCoversationalComponents::class,
+                    GenerateKeyPair::class,
+                    AddPublicKey::class
                 ]);
             }
         }

@@ -13,10 +13,10 @@ return [
      |--------------------------------------------------------------------------
      | Whatsapp Token
      |--------------------------------------------------------------------------
-     | Your Whatsapp token  you received after creating
+     | Your Whatsapp access token  you received after creating
      | the application on Whatsapp(Facebook Portal).
      */
-    'token' => env('WHATSAPP_TOKEN'),
+    'token' => env('WHATSAPP_ACCESS_TOKEN'),
 
 
     /*
@@ -44,7 +44,32 @@ return [
      |--------------------------------------------------------------------------
      | Your Whatsapp phone_number_id
      */
-    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID',''),
+    'phone_number_id'=>env('WHATSAPP_PHONE_NUMBER_ID'),
+
+
+     /*
+     |--------------------------------------------------------------------------
+     | Passphrase for whatsapp key pair
+     |--------------------------------------------------------------------------
+     | Only required if flows with end point are used,otherwise leave as is.
+    */
+    'passphrase'=>env('WHATSAPP_KEYS_PASSPHRASE'),
+     /*
+     |--------------------------------------------------------------------------
+     | Whatsapp  Public Key
+     |--------------------------------------------------------------------------
+     | Public key uploaded to  whatsapp for encryption of flow end point data.
+     | Only required if flows with end point are used,otherwise leave as is.
+    */
+    'public_key'=>env('WHATSAPP_PUBLIC_KEY'),
+     /*
+     |--------------------------------------------------------------------------
+     | Whatsapp  Private Key
+     |--------------------------------------------------------------------------
+     | Private key used for decryption of flow end point data.
+     | Only required if flows with end point are used,otherwise leave as is.
+    */
+    'private_key'=>env('WHATSAPP_PRIVATE_KEY'),
 
 
      /*
@@ -95,7 +120,5 @@ return [
         */
        "prompts"=> ["Book a flight","plan a vacation"],
     ]
-
-
 
 ];
