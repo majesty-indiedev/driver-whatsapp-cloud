@@ -158,7 +158,6 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     protected function loadMessages()
     {
-        \Log::info(json_encode($this->payload));
 
         if ($this->event->get('type') == 'text') {
             $message=new IncomingMessage(
