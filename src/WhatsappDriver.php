@@ -2,12 +2,12 @@
 
 namespace Botman\Drivers\Whatsapp;
 
-use BotMan\BotMan\Users\User;
 use Illuminate\Support\Collection;
 use BotMan\BotMan\Drivers\HttpDriver;
 use BotMan\BotMan\Interfaces\UserInterface;
 use BotMan\BotMan\Messages\Incoming\Answer;
 use BotMan\BotMan\Messages\Attachments\File;
+use BotMan\Drivers\Whatsapp\Extensions\User;
 use BotMan\BotMan\Interfaces\VerifiesService;
 use BotMan\BotMan\Messages\Attachments\Audio;
 use BotMan\BotMan\Messages\Attachments\Image;
@@ -15,7 +15,6 @@ use BotMan\BotMan\Messages\Attachments\Video;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use BotMan\Drivers\Whatsapp\Extensions\TemplateMessage;
 use BotMan\BotMan\Exceptions\Base\DriverException;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use BotMan\Drivers\Whatsapp\Extensions\FlowMessage;
@@ -26,6 +25,7 @@ use BotMan\Drivers\Whatsapp\Extensions\MediaMessage;
 use BotMan\Drivers\Whatsapp\Extensions\ContactsMessage;
 use BotMan\Drivers\Whatsapp\Extensions\LocationMessage;
 use BotMan\Drivers\Whatsapp\Extensions\ReactionMessage;
+use BotMan\Drivers\Whatsapp\Extensions\TemplateMessage;
 use BotMan\Drivers\Whatsapp\Exceptions\WhatsappException;
 use BotMan\Drivers\Whatsapp\Extensions\InteractiveListMessage;
 use BotMan\Drivers\Whatsapp\Extensions\LocationRequestMessage;
@@ -87,9 +87,9 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
     public function matchesRequest()
     {
         $validSignature = empty($this->config->get('app_secret')) || $this->validateSignature();
-        $machesDriverMessage=!is_null($this->payload->get('contacts')) || !is_null($this->event->get('from'));
+        $matchesDriverMessage=!is_null($this->payload->get('contacts')) || !is_null($this->event->get('from'));
 
-        return $machesDriverMessage && $validSignature;
+        return $matchesDriverMessage && $validSignature;
     }
 
     /**
@@ -276,6 +276,16 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             $message->addExtras('choice_id',$choice_id);
             $message->addExtras('choice_text',$choice_text);
         }
+        else if(isset($this->event->get('interactive')['nfm_reply'])){
+            $message=new IncomingMessage(
+                '',
+                $this->getMessageSender(),
+                $this->getMessageRecipient(),
+                $this->getMessagePayload()
+            );
+            $data=$this->event->get('interactive')['nfm_reply']['response_json'];
+            $message->addExtras('data',json_decode($data, true));
+        }
         else{
             $message=new IncomingMessage(
                 '',
@@ -300,8 +310,8 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     protected function getMessageSender()
     {
-        if (isset($this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'])) {
-            return $this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'];
+        if (!is_null($this->event->get('from'))) {
+            return $this->event->get('from');
         } else{
             return null;
         }
@@ -312,11 +322,12 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     protected function getMessageRecipient()
     {
-        if (!is_null($this->event->get('from'))) {
-            return $this->event->get('from');
+        if (isset($this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'])) {
+            return $this->payload->get('entry')[0]['changes'][0]['value']['metadata']['display_phone_number'];
         } else{
             return null;
         }
+        
     }
 
       /**
@@ -338,13 +349,13 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     public function getUser(IncomingMessage $matchingMessage)
     {
-        $contact = Collection::make($matchingMessage->getPayload()['contacts'][0]);
+        $contact=Collection::make($this->payload->get('entry')[0]['changes'][0]['value']['contacts'][0]);
         return new User(
             $contact->get('wa_id'),
             $contact->get('profile')['name'],
             null,
             $contact->get('wa_id'),
-            $contact
+            $contact->toArray()
         );
     }
 
@@ -384,7 +395,8 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     public function buildServicePayload($message, $matchingMessage, $additionalParameters = [])
     {
-        $recipient = $matchingMessage->getRecipient() === '' ? $matchingMessage->getSender() : $matchingMessage->getRecipient();
+    
+        $recipient = $matchingMessage->getSender() === '' ? $matchingMessage->getRecipient(): $matchingMessage->getSender();
 
         $parameters = array_merge_recursive([
             'messaging_product' => 'whatsapp',
@@ -460,9 +472,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     public function sendRequest($endpoint, array $parameters, IncomingMessage $matchingMessage)
     {
-        $parameters = array_replace_recursive([
-            'to' => $matchingMessage->getRecipient(),
-        ], $parameters);
+        $parameters = array_replace_recursive([], $parameters);
 
         if ($this->config->get('throw_http_exceptions')) {
             return $this->postWithExceptionHandling($this->buildApiUrl($endpoint), [], $parameters, $this->buildAuthHeader());

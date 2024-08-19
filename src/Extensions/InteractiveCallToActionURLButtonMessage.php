@@ -25,8 +25,11 @@ class InteractiveCallToActionURLButtonMessage implements JsonSerializable, WebAc
     public $url;
 
 
-    /** @var array */
-     public $header=[];
+     /** @var array */
+     public $header=[
+        "type"=>"text",
+        "text"=>""
+     ];
 
       /** @var string */
     public $context_message_id;

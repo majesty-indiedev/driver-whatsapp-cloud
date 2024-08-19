@@ -41,8 +41,8 @@ class ElementFlowActionPayload implements JsonSerializable
     {
             $array=["screen"=>$this->screen];
 
-            if(!empty($data)){
-                $array['data'] = $data;
+            if(!empty($this->data)){
+                $array['data'] = $this->data;
             }
 
             return $array;

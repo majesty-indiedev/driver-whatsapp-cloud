@@ -33,16 +33,14 @@ class InteractiveListMessage implements JsonSerializable, WebAccess
      * @param $text
      * @return static
      */
-    public static function create($text, $header, $footer, $action)
+    public static function create($text,$action)
     {
-        return new static($text, $header, $footer, $action);
+        return new static($text,$action);
     }
 
-    public function __construct($text, $header, $footer, $action)
+    public function __construct($text,$action)
     {
         $this->text = $text;
-        $this->header = $header;
-        $this->footer = $footer;
         $this->action = $action;
     }
 
@@ -69,6 +67,40 @@ class InteractiveListMessage implements JsonSerializable, WebAccess
             }
         }
 
+        return $this;
+    }
+
+
+      /**
+     * Get the Footer.
+     *
+     * @return string
+     */
+    public function getFooter(){
+
+        if (empty($this->footer)) {
+            throw new \UnexpectedValueException('This message does not contain a footer');
+        }
+        return $this->footer;
+    }
+
+    /**
+     * Set the Footer.
+     * @param  string  $footer
+     * @return $this
+     */
+    public function addFooter($footer){
+        $this->footer=$footer;
+        return $this;
+    }
+
+    /**
+     * Set the Header.
+     * @param  string  $header
+     * @return $this
+     */
+    public function addHeader($header){
+        $this->header=$header;
         return $this;
     }
 
