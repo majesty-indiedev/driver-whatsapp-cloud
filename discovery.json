@@ -1,14 +1,15 @@
 {
-    "botman/driver-config": [
-        "stubs/whatsapp.php"
-    ],
-    "botman/driver": [
-        "BotMan\\Drivers\\Whatsapp\\WhatsappDriver"
-    ],
-    "botman/commands": [
-      "BotMan\\Drivers\\Whatsapp\\Commands\\AddCoversationalComponents"
-    ]
-  
-  
-  }
-  
+  "botman/driver-config": [
+      "stubs/whatsapp.php"
+  ],
+  "botman/driver": [
+      "BotMan\\Drivers\\Whatsapp\\WhatsappDriver"
+  ],
+  "botman/commands": [
+    "BotMan\\Drivers\\Whatsapp\\Commands\\AddCoversationalComponents",
+    "BotMan\\Drivers\\Whatsapp\\Commands\\GenerateKeyPair",
+    "BotMan\\Drivers\\Whatsapp\\Commands\\AddPublicKey"
+  ]
+
+
+}

@@ -34,30 +34,32 @@ class FlowMessage implements JsonSerializable, WebAccess
      public $footer;
 
     /** @var array */
-      public $header=[
-        "type"=>"text",
-        "text"=>""
-     ];
+      public $header;
 
       /** @var string */
     public $context_message_id;
+
+
+    /** @var int */
+    public $version;
 
     /**
      * @param $text
      * @return static
      */
-    public static function create($id,$token,$cta_text,$text,$mode='published',$action='navigate')
+    public static function create($id,$token,$cta_text,$text,$mode='published',$action='navigate',$version=3)
     {
-        return new static($id,$token,$cta_text,$text,$mode,$action);
+        return new static($id,$token,$cta_text,$text,$mode,$action,$version);
     }
 
 
-    public function __construct($id,$token,$cta_text,$text,$mode,$action='navigate')
+    public function __construct($id,$token,$cta_text,$text,$mode='published',$action='navigate',$version=3)
     {
         $this->text = $text;
         $this->id = $id;
         $this->token = $token;
         $this->cta_text = $cta_text;
+        $this->version=$version;
         $this->mode=$mode;
         $this->action = $action;
     }
@@ -155,7 +157,7 @@ class FlowMessage implements JsonSerializable, WebAccess
                 "action"=>[
                     "name"=> "flow",
                     "parameters"=>[
-                      "flow_message_version"=>3,
+                      "flow_message_version"=>$this->version,
                       "flow_token"=> $this->token,
                       "flow_id"=> $this->id,
                       "flow_cta"=>$this->cta_text,
@@ -196,7 +198,7 @@ class FlowMessage implements JsonSerializable, WebAccess
             'text' => $this->text,
             'header'=>$this->header,
             'footer'=>$this->footer,
-            "message_version"=>3,
+            "message_version"=>$this->version,
             "token"=> $this->token,
             "id"=> $this->id,
             "cta_text"=>$this->cta_text,

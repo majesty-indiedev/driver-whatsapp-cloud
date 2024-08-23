@@ -525,11 +525,13 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         $responseData['error']['code'] = $responseData['error']['code'] ?? 'No description from Vendor';
         $responseData['error']['message'] = $responseData['error']['message'] ?? 'No error code from Vendor';
         $responseData['error']['type'] = $responseData['error']['type'] ?? 'No type from Vendor';
+        $responseData['error']['error_data'] = $responseData['error']['error_data'] ?? 'No error data from Vendor';
 
         $message = "Status Code: {$response->getStatusCode()}\n".
             "Description: ".print_r($responseData['error']['message'], true)."\n".
             "Error Code: ".print_r($responseData['error']['code'], true)."\n".
             "Error Type: ".print_r($responseData['error']['type'], true)."\n".
+            "Error Data: ".print_r($responseData['error']['error_data'], true)."\n".
             "URL: $url\n".
             "URL Parameters: ".print_r($urlParameters, true)."\n".
             "Post Parameters: ".print_r($postParameters, true)."\n".

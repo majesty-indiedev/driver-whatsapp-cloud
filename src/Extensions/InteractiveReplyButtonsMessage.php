@@ -23,8 +23,11 @@ class InteractiveReplyButtonsMessage implements JsonSerializable, WebAccess
      /** @var string */
      public $footer;
 
-     /** @var array*/
-     public $header;
+     /** @var array */
+     public $header=[
+        "type"=>"text",
+        "text"=>""
+     ];
 
       /** @var string */
     public $context_message_id;
