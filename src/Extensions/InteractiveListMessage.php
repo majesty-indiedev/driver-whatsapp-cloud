@@ -142,7 +142,7 @@ class InteractiveListMessage implements JsonSerializable, WebAccess
                     'type' => 'list',
                     'header' => [
                         'type' => 'text',
-                        'text' => $this->header,
+                        'text' => $this->header?$this->header:'',
                     ],
                     'body' => [
                         'text' => $this->text

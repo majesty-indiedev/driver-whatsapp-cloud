@@ -130,14 +130,23 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             "status"=>"read",
             "message_id"=>$matchingMessage->getExtras('id')
         ];
-
-        if ($this->config->get('throw_http_exceptions')) {
-            return $this->postWithExceptionHandling($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
-        }
-
+        
         return $this->http->post($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
 
     }
+
+     /**
+     * Send a typing indicator and wait for the given amount of seconds.
+     *
+     * @param  IncomingMessage  $matchingMessage
+     * @param  float  $seconds
+     * @return mixed
+     */
+    public function typesAndWaits(IncomingMessage $matchingMessage, float $seconds)
+    {
+        sleep($seconds);
+    }
+
 
     /**
      * Retrieve the chat message.
