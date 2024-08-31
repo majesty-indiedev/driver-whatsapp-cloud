@@ -88,8 +88,8 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
     {
         $validSignature = empty($this->config->get('app_secret')) || $this->validateSignature();
         $matchesDriverMessage=!is_null($this->payload->get('contacts')) || !is_null($this->event->get('from'));
-
-        return $matchesDriverMessage && $validSignature;
+        $validPhoneNumberId=$this->validatePhoneNumberId();
+        return $matchesDriverMessage && $validSignature&&$validPhoneNumberId;
     }
 
     /**
@@ -119,6 +119,18 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         );
     }
 
+    protected function validatePhoneNumberId(){
+
+        if ($this->config->get('restrict_inbound_messages_to_phone_number_id')) {
+            $phoneNumberId = $this->payload->get('entry')[0]['changes'][0]['value']['metadata']['phone_number_id'] ?? null;
+            return $phoneNumberId === $this->config->get('phone_number_id');
+        } else {
+            return true;
+        }
+
+    }
+
+
      /**
      * @param  IncomingMessage  $matchingMessage
      * @return \Symfony\Component\HttpFoundation\Response
@@ -130,7 +142,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             "status"=>"read",
             "message_id"=>$matchingMessage->getExtras('id')
         ];
-        
+
         return $this->http->post($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
 
     }
@@ -167,7 +179,6 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     protected function loadMessages()
     {
-
         if ($this->event->get('type') == 'text') {
             $message=new IncomingMessage(
                 $this->event->get('text')['body'],
@@ -336,7 +347,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         } else{
             return null;
         }
-        
+
     }
 
       /**
@@ -404,7 +415,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
      */
     public function buildServicePayload($message, $matchingMessage, $additionalParameters = [])
     {
-    
+
         $recipient = $matchingMessage->getSender() === '' ? $matchingMessage->getRecipient(): $matchingMessage->getSender();
 
         $parameters = array_merge_recursive([

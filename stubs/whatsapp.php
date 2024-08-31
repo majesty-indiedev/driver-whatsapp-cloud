@@ -88,6 +88,15 @@ return [
     'throw_http_exceptions' => true,
 
 
+     /*
+     |--------------------------------------------------------------------------
+     | restrict_inbound_messages_to_phone_number_id
+     |--------------------------------------------------------------------------
+     | Restrict inbound messages to this phone number id - ingnore all others
+     */
+    'restrict_inbound_messages_to_phone_number_id' => true,
+
+
     /*
     |--------------------------------------------------------------------------
     | Conversational Components

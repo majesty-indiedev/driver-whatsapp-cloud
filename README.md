@@ -90,6 +90,8 @@ This is the contents of the file that will be published at config/botman/whatsap
         | Only required if flows with end point are used,otherwise leave as is.
         */
         'passphrase'=>env('WHATSAPP_KEYS_PASSPHRASE'),
+        
+
         /*
         |--------------------------------------------------------------------------
         | Whatsapp  Public Key
@@ -98,6 +100,8 @@ This is the contents of the file that will be published at config/botman/whatsap
         | Only required if flows with end point are used,otherwise leave as is.
         */
         'public_key'=>env('WHATSAPP_PUBLIC_KEY'),
+
+
         /*
         |--------------------------------------------------------------------------
         | Whatsapp  Private Key
@@ -122,6 +126,14 @@ This is the contents of the file that will be published at config/botman/whatsap
         | Do you want the driver to throw custom(driver) exceptions or the default exceptions
         */
         'throw_http_exceptions' => true,
+
+        /*
+        |--------------------------------------------------------------------------
+        | restrict_inbound_messages_to_phone_number_id
+        |--------------------------------------------------------------------------
+        | Restrict inbound messages to this phone number id - ingnore all others
+        */
+        'restrict_inbound_messages_to_phone_number_id' => true,
 
 
         /*
