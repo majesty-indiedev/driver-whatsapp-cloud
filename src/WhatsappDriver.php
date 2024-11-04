@@ -380,13 +380,30 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
     }
 
     /**
-     * @param IncomingMessage $message
-     * @return \BotMan\BotMan\Messages\Incoming\Answer
-     */
+    * @param IncomingMessage $message
+    * @return \BotMan\BotMan\Messages\Incoming\Answer
+    */
     public function getConversationAnswer(IncomingMessage $message)
     {
-     return Answer::create($message->getText())->setMessage($message);
+        if(isset($this->event->get('interactive')['button_reply'])){
+            return Answer::create($this->event->get('interactive')['button_reply']['title'])->setMessage($message)->setInteractiveReply(true)->setValue($this->event->get('interactive')['button_reply']['id']);
+        }
+        if(isset($this->event->get('interactive')['list_reply'])){
+            return Answer::create($this->event->get('interactive')['list_reply']['title'])->setMessage($message)->setInteractiveReply(true)->setValue($this->event->get('interactive')['list_reply']['id']);
+        }
+        else if(isset($this->event->get('interactive')['nfm_reply'])){
+            return Answer::create('')->setMessage($message)->setInteractiveReply(true)->setValue($this->event->get('interactive')['nfm_reply']['response_json']);
+        }
+        else if(!empty($this->event->get('location'))){
+            return Answer::create('')->setMessage($message)->setInteractiveReply(true)->setValue(json_encode($this->event->get('location')));
+        }
+        else if(!empty($this->event->get('button'))){
+            return Answer::create(isset($this->event->get('button')['text'])?$this->event->get('button')['text']:'')->setMessage($message)->setInteractiveReply(true)->setValue(json_encode($this->event->get('button')['payload']));
+        }
+
+        return Answer::create($message->getText())->setMessage($message);
     }
+
 
 
       /**

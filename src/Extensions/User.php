@@ -36,6 +36,15 @@ class User extends BotManUser implements UserInterface
 
     }
 
+     /**
+     * @return string
+     */
+    public function getPhoneNumber()
+    {
+        return isset($this->user_info['wa_id']) ? $this->user_info['wa_id'] : null;
+
+    }
+
     /**
      * @return string
      */
