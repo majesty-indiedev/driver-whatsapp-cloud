@@ -147,6 +147,22 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
 
     }
 
+      /**
+     * @param  IncomingMessage  $matchingMessage
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function markMessageAsRead(IncomingMessage $matchingMessage)
+    {
+        $payload=[
+            "messaging_product"=>"whatsapp",
+            "status"=>"read",
+            "message_id"=>$matchingMessage->getExtras('id')
+        ];
+
+        return $this->http->post($this->buildApiUrl($this->endpoint), [], $payload, $this->buildAuthHeader(), true);
+
+    }
+
      /**
      * Send a typing indicator and wait for the given amount of seconds.
      *
@@ -362,22 +378,30 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         }
     }
 
-    /**
+     /**
      * Retrieve User information.
      * @param IncomingMessage $matchingMessage
      * @return UserInterface
      */
     public function getUser(IncomingMessage $matchingMessage)
     {
-        $contact=Collection::make($this->payload->get('entry')[0]['changes'][0]['value']['contacts'][0]);
+
+        $messagingDetails=$this->payload->get('entry')[0]['changes'][0]['value'];
+        if(isset($messagingDetails['contacts'][0])){
+            $contact=Collection::make($this->payload->get('entry')[0]['changes'][0]['value']['contacts'][0]);
+        }else{
+            $contact=Collection::make([]);
+        }
+
         return new User(
             $contact->get('wa_id'),
-            $contact->get('profile')['name'],
+            isset($contact->get('profile')['name'])?$contact->get('profile')['name']:null,
             null,
             $contact->get('wa_id'),
             $contact->toArray()
         );
     }
+
 
     /**
     * @param IncomingMessage $message
@@ -406,6 +430,15 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
 
 
 
+    /**
+     * @return bool
+     */
+    public function isBot()
+    {
+        // Whatsapp bot replies don't get returned
+        return false;
+    }
+
       /**
      * Convert a Question object into a valid Whatsapp
      * quick reply response object.
@@ -424,12 +457,12 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
     }
 
 
-        /**
-     * @param string|\BotMan\BotMan\Messages\Outgoing\Question $message
-     * @param IncomingMessage $matchingMessage
-     * @param array $additionalParameters
-     * @return $this
-     */
+    /**
+     * @param  string|Question|IncomingMessage  $message
+     * @param  IncomingMessage  $matchingMessage
+     * @param  array  $additionalParameters
+     * @return \Symfony\Component\HttpFoundation\Response
+    */
     public function buildServicePayload($message, $matchingMessage, $additionalParameters = [])
     {
 
@@ -470,7 +503,7 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
         }
         else {
             $parameters['text'] = [
-                'body' => $message->getText(),
+                'body' => $message,
             ];
             $parameters['type'] = 'text';
         }
@@ -559,8 +592,8 @@ class WhatsappDriver extends HttpDriver implements VerifiesService
             return $responseData;
         }
 
-        $responseData['error']['code'] = $responseData['error']['code'] ?? 'No description from Vendor';
-        $responseData['error']['message'] = $responseData['error']['message'] ?? 'No error code from Vendor';
+        $responseData['error']['code'] = $responseData['error']['code'] ?? 'No error code from Vendor';
+        $responseData['error']['message'] = $responseData['error']['message'] ?? 'No description from Vendor';
         $responseData['error']['type'] = $responseData['error']['type'] ?? 'No type from Vendor';
         $responseData['error']['error_data'] = $responseData['error']['error_data'] ?? 'No error data from Vendor';
 

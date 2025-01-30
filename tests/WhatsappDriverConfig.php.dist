@@ -1,0 +1,24 @@
+<?php
+
+use BotMan\Drivers\Whatsapp\Tests;
+
+class WhatsappDriverConfig {
+  /**
+   * These must be filled out with valid Whatsapp app details for the tests to
+   * run.
+  */
+  public static $url = 'https://graph.facebook.com';
+  public static $token = '';
+  public static $app_secret = '';
+  public static $verification = '';
+  public static $phone_number_id = '';
+  public static $version = 'v20.0';
+  public static $throw_http_exceptions = false;//Always keep false for seamless testing
+  public static $restrict_inbound_messages_to_phone_number_id = true;
+  public static $passphrase = '';//Optional used for flows with end point -for future use
+  public static $public_key = '';//Optional used for flows with end point -for future use
+  public static $private_key = '';//Optional used for flows with end point -for future use
+
+  public static $to_phone_number = '';
+
+}

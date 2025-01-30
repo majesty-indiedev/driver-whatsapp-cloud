@@ -167,7 +167,7 @@ class MediaMessage implements JsonSerializable, WebAccess
     public function caption($caption){
 
         if (!in_array($this->type, $this->have_caption)) {
-            throw new \UnexpectedValueException(ucfirst($this->type).'does not support caption');
+            throw new \UnexpectedValueException(ucfirst($this->type).' does not support caption');
         }
 
         $this->caption=$caption;
@@ -199,7 +199,7 @@ class MediaMessage implements JsonSerializable, WebAccess
     public function fileName($filename){
 
         if (!in_array($this->type,['document'])) {
-            throw new \UnexpectedValueException(ucfirst($this->type).'does not support filename');
+            throw new \UnexpectedValueException(ucfirst($this->type).' does not support filename');
         }
 
         $this->filename=$filename;

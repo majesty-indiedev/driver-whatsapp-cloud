@@ -409,7 +409,7 @@ You may need to cache configs
             namespace App\Http\Controllers;
             use Botman\Drivers\Whatsapp\Http\FlowProcessor;
 
-            class FlowController extends FlowProcessor
+            class CustomController extends FlowProcessor
             {
             
                 private const SCREEN_RESPONSES = [];
@@ -838,6 +838,17 @@ Then use the Artisan command:
 ## Contributing
 Please see [CONTRIBUTING](https://github.com/mohapinkepane/driver-whatsapp-cloud//blob/master/CONTRIBUTING.md) for details.
 
+
+## Testing
+
+    composer unit-test
+
+
+You can also run tests making real calls to the WhastApp Cloud API. Please put your testing credentials in WhatsappDriverConfig file.
+
+    composer integration-test
+ 
+If you are not recieving any massges but all the tests have passed. Check [Customer service window](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages).
 
 ## Credits
 

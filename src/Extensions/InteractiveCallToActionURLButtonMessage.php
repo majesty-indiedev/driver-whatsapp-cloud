@@ -160,7 +160,6 @@ class InteractiveCallToActionURLButtonMessage implements JsonSerializable, WebAc
         return [
             'type' => 'cta_url',
             'text' => $this->text,
-            'buttons' => $this->buttons,
             'header'=>$this->header,
             'footer'=>$this->footer,
             "display_text"=>$this->action,

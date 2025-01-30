@@ -25,8 +25,8 @@
     "require-dev": {
         "botman/studio-addons": "^1.0",
         "illuminate/contracts": "^5.5",
-        "phpunit/phpunit": "^5.0",
-        "mockery/mockery": "^1.1"
+        "phpunit/phpunit": "^9.0",
+        "mockery/mockery": "^1.6"
     },
     "autoload": {
         "psr-4": {
@@ -35,11 +35,16 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
-        }
+            "BotMan\\Drivers\\Whatsapp\\Tests\\": "tests/"
+        },
+        "classmap": [
+            "src/WhatsappDriver.php",
+            "tests/WhatsappDriverConfig.php"
+        ]
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
+        "unit-test": "vendor/bin/phpunit --testsuite unit",
+        "integration-test": "vendor/bin/phpunit --testsuite integration",
         "cs": "php-cs-fixer fix"
     },
     "extra": {
@@ -48,5 +53,11 @@
                 "BotMan\\Drivers\\Whatsapp\\Providers\\WhatsappServiceProvider"
             ]
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "thecodingmachine/discovery": true,
+            "kylekatarnls/update-helper": true
+        }
     }
-  }
+}
