@@ -138,9 +138,19 @@ class TemplateMessage implements JsonSerializable, WebAccess
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
+    }
+
+    /**
+     * Convert the message to string representation.
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return json_encode($this->toArray());
     }
 
     /**
