@@ -30,7 +30,7 @@ class Contact implements JsonSerializable
         $this->birthday = $birthday;
         $this->name = $name;
         $this->org = $org;
-  
+
         foreach ($addresses as $address) {
             if ($address instanceof Address) {
                 $this->addresses[] = $address->toArray();
@@ -68,7 +68,7 @@ class Contact implements JsonSerializable
         ];
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }

@@ -21,26 +21,26 @@ class ElementComponent implements JsonSerializable
     {
         return new static($type_component, $parameters);
     }
-  
-    
+
+
 
     /**
      * @param  array   $parameters
      */
     public function __construct($type_component, array $parameters)
-    { 
+    {
         $this->type_component = $type_component;
         $this->parameters = $parameters;
     }
 
- 
+
     /**
      * @return array
      */
     public function toArray()
     {
-        
-        $componentArray = [  
+
+        $componentArray = [
                 'type' => $this->type_component,
                 'sub_type' => 'url',
                 'index' => '0',
@@ -48,13 +48,13 @@ class ElementComponent implements JsonSerializable
     ];
 
     return $componentArray;
-    
+
     }
 
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }

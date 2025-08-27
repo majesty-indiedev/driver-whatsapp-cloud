@@ -60,14 +60,14 @@ class ElementButton implements JsonSerializable
                 'title' => $this->title,
             ],
         ];
-        
+
         return $buttonArray;
     }
 
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }
